@@ -1,10 +1,16 @@
-import { Tree } from "@/components/Tree";
+import { Panel } from "@/components/Panel";
+import { SortableTree } from "@/components/SortableTree";
 import { initialTree } from "@/data";
+import { useState } from "react";
 
 import "./globals.css";
 
-function App() {
-  return <Tree tree={initialTree} />;
-}
+export const App = () => {
+  const [tree, setTree] = useState(initialTree);
 
-export default App;
+  return (
+    <Panel>
+      <SortableTree tree={tree} onChange={setTree} />
+    </Panel>
+  );
+};

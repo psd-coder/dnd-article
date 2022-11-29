@@ -1,5 +1,4 @@
-import { TreeFile, TreeFolder, TreeId } from "../../data/types";
-import { isFile, isFolder } from "../../data/utils";
+import { TreeFile, TreeFolder, TreeId } from "@/data/types";
 
 interface FlattenedProps {
   parentId: TreeId | null;

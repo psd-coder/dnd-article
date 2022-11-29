@@ -42,4 +42,6 @@ export const initialTree: Tree = [
     getComponentFolder("Icon", true),
   ]),
   getFolder("dependencies", [getFile("utils.ts"), getFile("i18n.ts")], true),
+  getFile("app.tsx"),
+  getFile("globals.css"),
 ];
