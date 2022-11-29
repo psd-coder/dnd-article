@@ -5,4 +5,9 @@ import svgr from "vite-plugin-svgr";
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react(), svgr()],
+  css: {
+    modules: {
+      generateScopedName: "[name]__[local]-[hash:base64:5]",
+    },
+  },
 });
