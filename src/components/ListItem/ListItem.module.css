@@ -1,0 +1,61 @@
+.item {
+  --item-vertical-padding: calc(var(--space-1) * 3);
+  --item-line-height: var(--space-8);
+
+  display: flex;
+  align-items: center;
+  padding: var(--item-vertical-padding);
+  border: none;
+  border-radius: var(--radius-m);
+  background: none;
+  font-size: 15px;
+  line-height: var(--item-line-height);
+
+  &:where(:hover, :focus-visible) {
+    background: rgba(0, 0, 0, 0.1);
+    outline: none;
+  }
+}
+
+.depthSpacer {
+  position: relative;
+  height: 100%;
+  width: calc(var(--space-1) * 6);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    width: 1px;
+    top: calc(var(--item-vertical-padding) * -1);
+    bottom: calc(var(--item-vertical-padding) * -1);
+    right: 0;
+    background: var(--color-borders);
+  }
+
+  .item:where(:hover, :focus-visible) &::before {
+    width: 3px;
+    height: 3px;
+    right: -1px;
+    top: calc(var(--item-line-height) / 2 - 1px);
+    background: var(--color-secondary);
+    border-radius: 50%;
+  }
+}
+
+.startAdornment {
+  margin: 0 var(--space-2);
+  line-height: 0;
+}
+
+.label {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  margin-right: var(--space-2);
+  color: var(--color-primary);
+}

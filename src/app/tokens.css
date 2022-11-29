@@ -1,0 +1,19 @@
+:root {
+  --color-primary: #000;
+  --color-secondary: rgba(77, 77, 77, 1);
+  --color-borders: rgba(0, 0, 0, 0.1);
+
+  --bg-0: #fff;
+
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-4: 8px;
+  --space-8: 16px;
+
+  --elevation-0: 0px 4px 40px 0px rgba(0, 0, 0, 0.1);
+
+  --radius-s: 2px;
+  --radius-m: 4px;
+
+  --icon-m: 16px;
+}

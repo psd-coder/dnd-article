@@ -1,0 +1,5 @@
+.iconFallback {
+  display: inline-block;
+  width: var(--icon-m);
+  height: var(--icon-m);
+}
