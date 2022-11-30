@@ -1,0 +1,11 @@
+.isDragging {
+  opacity: 0.5;
+}
+
+.isSorting {
+  pointer-events: none;
+}
+
+.isOverlay {
+  background: none;
+}

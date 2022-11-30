@@ -1,5 +1,5 @@
-import { ReactComponent as IconArrowDown } from "@/components/Icon/ArrowDown.svg";
 import clsx from "clsx";
+import { ReactComponent as IconArrowDown } from "@/components/Icon/ArrowDown.svg";
 
 import styles from "./FolderIcon.module.css";
 
