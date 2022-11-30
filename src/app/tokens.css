@@ -2,6 +2,7 @@
   --color-primary: #000;
   --color-secondary: rgba(77, 77, 77, 1);
   --color-borders: rgba(0, 0, 0, 0.1);
+  --color-accent: rgba(0, 102, 255, 1);
 
   --bg-0: #fff;
   --bg-overlay: rgba(222, 222, 222, 0.75);

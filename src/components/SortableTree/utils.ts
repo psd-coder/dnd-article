@@ -60,21 +60,22 @@ function getMinDepth({ nextItem }: { nextItem?: FlattenedItem }) {
   return nextItem.depth;
 }
 
-const DEPTH_INDENTATION = 12;
 function getProjectedDepth({
   activeItem,
   dragOffset,
   previousItem,
   nextItem,
+  indentationWidth,
 }: {
   activeItem: FlattenedItem;
   dragOffset: number;
   previousItem?: FlattenedItem;
   nextItem?: FlattenedItem;
+  indentationWidth: number;
 }) {
   const minDepth = getMinDepth({ nextItem });
   const maxDepth = getMaxDepth({ previousItem });
-  const dragDepth = getDragDepth(dragOffset, DEPTH_INDENTATION);
+  const dragDepth = getDragDepth(dragOffset, indentationWidth);
   const projectedDepth = activeItem.depth + dragDepth;
 
   let finalDepth = projectedDepth;
@@ -93,11 +94,13 @@ export function getProjection({
   activeId,
   overId,
   dragOffset,
+  indentationWidth,
 }: {
   items: FlattenedItem[];
   activeId: TreeId | null;
   overId: TreeId | null;
   dragOffset: number;
+  indentationWidth: number;
 }) {
   if (!activeId || !overId) {
     return null;
@@ -114,6 +117,7 @@ export function getProjection({
     nextItem,
     previousItem,
     dragOffset,
+    indentationWidth,
   });
   const parentId = (() => {
     if (depth === 0 || !previousItem) {

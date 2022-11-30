@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { AnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { ListItem, ListItemHtmlProps } from "@/components/ListItem";
+import { TreeListItem, TreeListItemHtmlProps } from "@/components/TreeListItem";
 import { FolderIcon } from "@/components/FolderIcon";
 import { FileIcon } from "@/components/FileIcon";
 
@@ -28,14 +28,17 @@ const renderAdornment = (item: FlattenedItem): ReactNode => {
   return null;
 };
 
-interface SortableTreeItemProps extends ListItemHtmlProps {
+interface SortableTreeItemProps extends TreeListItemHtmlProps {
   item: FlattenedItem;
   isOverlay?: boolean;
+  withDropIndicator: boolean;
+  indentationWidth: number;
 }
 
 export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   item,
   isOverlay = false,
+  withDropIndicator,
   ...props
 }) => {
   const {
@@ -55,7 +58,7 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   };
 
   return (
-    <ListItem
+    <TreeListItem
       ref={setNodeRef}
       style={style}
       className={clsx({
@@ -63,6 +66,8 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
         [styles.isSorting]: isSorting,
         [styles.isOverlay]: isOverlay,
       })}
+      withDepthIndicator={withDropIndicator ? true : !isSorting}
+      asIndicator={isDragging && withDropIndicator}
       startAdornment={renderAdornment(item)}
       name={item.name}
       depth={isOverlay ? 0 : item.depth}

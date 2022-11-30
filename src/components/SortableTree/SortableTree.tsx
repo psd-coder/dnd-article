@@ -14,6 +14,7 @@ import {
   closestCenter,
   MouseSensor,
   TouchSensor,
+  Modifier,
   useSensors,
 } from "@dnd-kit/core";
 import {
@@ -23,7 +24,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Portal } from "@/components/Portal";
-import { List } from "@/components/List";
+import { List } from "@/components/TreeList";
 import { Tree, TreeId } from "@/data";
 import { isFolder } from "@/data/utils";
 
@@ -38,6 +39,7 @@ import {
 } from "./utils";
 import { isFlattenedFolder } from "./types";
 
+const LEVEL_INDENTATION = 12;
 const MEASURING = {
   droppable: {
     strategy: MeasuringStrategy.Always,
@@ -66,6 +68,21 @@ const OVERLAY_DROP_ANIMATION: DropAnimation = {
   },
 };
 
+const getOverlayModifiers = (
+  withDropIndicator: boolean
+): undefined | Modifier[] => {
+  if (!withDropIndicator) {
+    return undefined;
+  }
+
+  return [
+    ({ draggingNodeRect, transform }) => ({
+      ...transform,
+      y: transform.y + (draggingNodeRect?.height ?? 0) / 2,
+    }),
+  ];
+};
+
 const SENSOR_CONFIGS = [
   {
     sensor: MouseSensor,
@@ -88,11 +105,13 @@ const SENSOR_CONFIGS = [
 
 interface SortableTreeProps {
   tree: Tree;
+  withDropIndicator?: boolean;
   onChange: (tree: Tree) => void;
 }
 
 export const SortableTree: React.FC<SortableTreeProps> = ({
   tree,
+  withDropIndicator = false,
   onChange,
 }) => {
   const sensors = useSensors(...SENSOR_CONFIGS);
@@ -112,6 +131,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
     activeId,
     overId,
     dragOffset: offsetLeft,
+    indentationWidth: LEVEL_INDENTATION,
   });
 
   function handleDragStart({ active }: DragStartEvent) {
@@ -187,6 +207,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
         <List>
           {renderedItems.map((item) => (
             <SortableTreeItem
+              withDropIndicator={withDropIndicator}
               key={item.id}
               item={{
                 ...item,
@@ -200,16 +221,22 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
                   ? () => handleCollapse(item.id)
                   : undefined
               }
+              indentationWidth={LEVEL_INDENTATION}
             />
           ))}
         </List>
         <Portal>
-          <DragOverlay dropAnimation={OVERLAY_DROP_ANIMATION}>
+          <DragOverlay
+            dropAnimation={OVERLAY_DROP_ANIMATION}
+            modifiers={getOverlayModifiers(withDropIndicator)}
+          >
             {activeItem ? (
               <SortableTreeItem
+                withDropIndicator={withDropIndicator}
                 id={activeItem.id}
                 item={activeItem}
                 isOverlay
+                indentationWidth={LEVEL_INDENTATION}
               />
             ) : null}
           </DragOverlay>
