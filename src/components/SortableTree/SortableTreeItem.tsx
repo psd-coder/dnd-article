@@ -7,7 +7,7 @@ import { ListItem, ListItemHtmlProps } from "@/components/ListItem";
 import { FolderIcon } from "@/components/FolderIcon";
 import { FileIcon } from "@/components/FileIcon";
 
-import { isFlattenedFile, isFlattenedFolder } from "./utils";
+import { isFlattenedFile, isFlattenedFolder } from "./types";
 import { FlattenedItem } from "./types";
 import styles from "./SortableTreeItem.module.css";
 

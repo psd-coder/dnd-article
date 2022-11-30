@@ -1,63 +1,15 @@
 import { arrayMove } from "@dnd-kit/sortable";
-import { Tree, TreeId, TreeItem, TreeItemType, isFile, isFolder } from "@/data";
+import {
+  Tree,
+  TreeId,
+  TreeItem,
+  isFile,
+  isFolder,
+  buildFolder,
+  buildFile,
+} from "@/data";
 
-import { FlattenedFile, FlattenedFolder, FlattenedItem } from "./types";
-
-function flatten(
-  tree: Tree,
-  parentId: TreeId | null = null,
-  depth = 0
-): FlattenedItem[] {
-  return tree.reduce<FlattenedItem[]>((acc, item, index) => {
-    acc.push({ ...item, parentId, depth, index });
-
-    if (isFolder(item)) {
-      acc.push(...flatten(item.children, item.id, depth + 1));
-    }
-
-    return acc;
-  }, []);
-}
-
-export function flattenTree(tree: Tree): FlattenedItem[] {
-  return flatten(tree);
-}
-
-export function isFlattenedFolder(
-  item: FlattenedItem
-): item is FlattenedFolder {
-  return isFolder(item);
-}
-
-export function isFlattenedFile(item: FlattenedItem): item is FlattenedFile {
-  return isFile(item);
-}
-
-export function filterCollapsedItems(
-  items: FlattenedItem[],
-  activeId: TreeId | null
-) {
-  const flattenedTree = flattenTree(items);
-  const excludeIds = flattenedTree.reduce<TreeId[]>(
-    (acc, item) =>
-      isFlattenedFolder(item) && item.collapsed && item.children.length
-        ? [...acc, item.id]
-        : acc,
-    activeId ? [activeId] : []
-  );
-
-  return items.filter((item) => {
-    if (item.parentId && excludeIds.includes(item.parentId)) {
-      if (isFlattenedFolder(item) && item.children.length) {
-        excludeIds.push(item.id);
-      }
-
-      return false;
-    }
-
-    return true;
-  });
-}
+import { FlattenedItem, isFlattenedFolder } from "./types";
 
 export function updateTreeItem(
   tree: Tree,
@@ -79,56 +31,91 @@ export function updateTreeItem(
   });
 }
 
+// ############################################################
+// ############################################################
+// Dragging projection utils
+// ############################################################
+// ############################################################
 function getDragDepth(offset: number, indentationWidth: number) {
   return Math.round(offset / indentationWidth);
 }
 
-function getMaxDepth({ previousItem }: { previousItem: FlattenedItem }) {
-  if (previousItem) {
+function getMaxDepth({ previousItem }: { previousItem?: FlattenedItem }) {
+  if (!previousItem) {
+    return 0;
+  }
+
+  if (isFlattenedFolder(previousItem)) {
     return previousItem.depth + 1;
   }
 
-  return 0;
+  return previousItem.depth;
 }
 
-function getMinDepth({ nextItem }: { nextItem: FlattenedItem }) {
-  if (nextItem) {
-    return nextItem.depth;
+function getMinDepth({ nextItem }: { nextItem?: FlattenedItem }) {
+  if (!nextItem) {
+    return 0;
   }
 
-  return 0;
+  return nextItem.depth;
 }
 
-export function getProjection(
-  items: FlattenedItem[],
-  activeId: TreeId,
-  overId: TreeId,
-  dragOffset: number,
-  indentationWidth: number
-) {
+const DEPTH_INDENTATION = 12;
+function getProjectedDepth({
+  activeItem,
+  dragOffset,
+  previousItem,
+  nextItem,
+}: {
+  activeItem: FlattenedItem;
+  dragOffset: number;
+  previousItem?: FlattenedItem;
+  nextItem?: FlattenedItem;
+}) {
+  const minDepth = getMinDepth({ nextItem });
+  const maxDepth = getMaxDepth({ previousItem });
+  const dragDepth = getDragDepth(dragOffset, DEPTH_INDENTATION);
+  const projectedDepth = activeItem.depth + dragDepth;
+
+  let finalDepth = projectedDepth;
+
+  if (projectedDepth >= maxDepth) {
+    finalDepth = maxDepth;
+  } else if (projectedDepth < minDepth) {
+    finalDepth = minDepth;
+  }
+
+  return finalDepth;
+}
+
+export function getProjection({
+  items,
+  activeId,
+  overId,
+  dragOffset,
+}: {
+  items: FlattenedItem[];
+  activeId: TreeId | null;
+  overId: TreeId | null;
+  dragOffset: number;
+}) {
+  if (!activeId || !overId) {
+    return null;
+  }
+
   const overItemIndex = items.findIndex(({ id }) => id === overId);
   const activeItemIndex = items.findIndex(({ id }) => id === activeId);
   const activeItem = items[activeItemIndex];
-  const newItems = arrayMove(items, activeItemIndex, overItemIndex);
-  const previousItem = newItems[overItemIndex - 1];
-  const nextItem = newItems[overItemIndex + 1];
-  const dragDepth = getDragDepth(dragOffset, indentationWidth);
-  const projectedDepth = activeItem.depth + dragDepth;
-  const maxDepth = getMaxDepth({
+  const sortedItems = arrayMove(items, activeItemIndex, overItemIndex);
+  const previousItem = sortedItems[overItemIndex - 1];
+  const nextItem = sortedItems[overItemIndex + 1];
+  const depth = getProjectedDepth({
+    activeItem,
+    nextItem,
     previousItem,
+    dragOffset,
   });
-  const minDepth = getMinDepth({ nextItem });
-  let depth = projectedDepth;
-
-  if (projectedDepth >= maxDepth) {
-    depth = maxDepth;
-  } else if (projectedDepth < minDepth) {
-    depth = minDepth;
-  }
-
-  return { depth, maxDepth, minDepth, parentId: getParentId() };
-
-  function getParentId() {
+  const parentId = (() => {
     if (depth === 0 || !previousItem) {
       return null;
     }
@@ -141,72 +128,122 @@ export function getProjection(
       return previousItem.id;
     }
 
-    const newParent = newItems
-      .slice(0, overItemIndex)
-      .reverse()
-      .find((item) => item.depth === depth)?.parentId;
+    // Find the closest element with the same depth
+    for (let i = overItemIndex - 1; i >= 0; i--) {
+      if (sortedItems[i].depth === depth) {
+        return sortedItems[i].parentId;
+      }
+    }
 
-    return newParent ?? null;
-  }
+    return null;
+  })();
+
+  return { depth, parentId };
 }
 
-export function findItem(items: TreeItem[], itemId: TreeId) {
-  return items.find(({ id }) => id === itemId);
+// ############################################################
+// ############################################################
+// Convertion from Tree -> FlattenedItem[]
+// ############################################################
+// ############################################################
+export function flattenTree(
+  tree: Tree,
+  parentId: TreeId | null = null,
+  depth = 0
+): FlattenedItem[] {
+  return tree.reduce<FlattenedItem[]>((acc, item, index) => {
+    acc.push({ ...item, parentId, depth, index });
+
+    if (isFolder(item)) {
+      acc.push(...flattenTree(item.children, item.id, depth + 1));
+    }
+
+    return acc;
+  }, []);
 }
 
-function getTreeItem(item: FlattenedItem): TreeItem {
-  if (isFlattenedFolder(item)) {
-    return {
-      id: item.id,
-      type: TreeItemType.Folder,
-      name: item.name,
-      collapsed: item.collapsed,
-      children: [],
-    };
+export function getRenderedFlattenedItems(
+  flattenedItems: FlattenedItem[],
+  activeId: TreeId | null
+) {
+  const excludeIds = flattenedItems.reduce<TreeId[]>(
+    (acc, item) =>
+      isFlattenedFolder(item) && item.collapsed && item.children.length
+        ? [...acc, item.id]
+        : acc,
+    activeId ? [activeId] : []
+  );
+
+  return flattenedItems.filter((item) => {
+    if (item.parentId && excludeIds.includes(item.parentId)) {
+      if (isFlattenedFolder(item) && item.children.length) {
+        excludeIds.push(item.id);
+      }
+
+      return false;
+    }
+
+    return true;
+  });
+}
+
+// ############################################################
+// ############################################################
+// Convertion from FlattenedItem[] -> Tree
+// ############################################################
+// ############################################################
+function buildTreeItem(flattenedItem: FlattenedItem): TreeItem {
+  if (isFlattenedFolder(flattenedItem)) {
+    return buildFolder(
+      flattenedItem.name,
+      [],
+      flattenedItem.collapsed,
+      flattenedItem.id
+    );
   }
 
-  return {
-    id: item.id,
-    type: TreeItemType.File,
-    name: item.name,
-  };
+  return buildFile(flattenedItem.name, flattenedItem.id);
 }
 
 export function buildTree(flattenedItems: FlattenedItem[]): Tree {
   const result: Tree = [];
-  const nodes: Record<TreeId, TreeItem> = {};
+  const indexedItems: Record<TreeId, TreeItem> = {};
 
   for (const item of flattenedItems) {
-    if (nodes[item.id]) {
+    if (indexedItems[item.id]) {
       // If it is already handle just skip to next
       continue;
     }
 
-    const treeItem = getTreeItem(item);
+    const treeItem = buildTreeItem(item);
 
-    if (item.parentId) {
-      if (!nodes[item.parentId]) {
+    indexedItems[item.id] = treeItem;
+
+    // If item doesn't have parent then just attach it to the root level
+    if (!item.parentId) {
+      result.push(treeItem);
+    } else {
+      // If parent isn't handled yet then we must do it immediately
+      if (!indexedItems[item.parentId]) {
         const flattenedFolderItem = flattenedItems.find(
           ({ id }) => id === item.parentId
         );
 
         if (!flattenedFolderItem) {
-          throw new Error("parentId must exists");
+          throw new Error("item with parentId must exists");
         }
 
-        const parentFolder = getTreeItem(flattenedFolderItem);
-        nodes[parentFolder.id] = parentFolder;
+        indexedItems[flattenedFolderItem.id] =
+          buildTreeItem(flattenedFolderItem);
       }
 
-      const parent = nodes[item.parentId];
+      const parent = indexedItems[item.parentId];
 
       if (!isFolder(parent)) {
         throw new Error("parent must be folder!");
       }
 
       parent.children.push(treeItem);
-    } else {
-      result.push(treeItem);
     }
   }
 

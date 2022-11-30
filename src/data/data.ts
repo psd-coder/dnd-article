@@ -1,47 +1,27 @@
-import { nanoid } from "nanoid";
-import { Tree, TreeItemType, TreeItem, TreeFolder, TreeFile } from "./types";
+import { Tree } from "./types";
 
-const getFolder = (
-  name: string,
-  children: TreeItem[],
-  collapsed: boolean = false
-): TreeFolder => ({
-  id: nanoid(),
-  type: TreeItemType.Folder,
-  name,
-  collapsed,
-  children,
-});
-
-const getFile = (name: string): TreeFile => ({
-  id: nanoid(),
-  type: TreeItemType.File,
-  name,
-});
-
-const getComponentFiles = (componentName: string) => [
-  getFile(`${componentName}.module.css`),
-  getFile(`${componentName}.stories.tsx`),
-  getFile(`${componentName}.tsx`),
-  getFile("index.ts"),
-];
-
-const getComponentFolder = (
-  componentName: string,
-  collapsed: boolean = false
-) => getFolder(componentName, getComponentFiles(componentName), collapsed);
+import {
+  buildFile,
+  buildFolder,
+  buildComponentFiles,
+  buildComponentFolder,
+} from "./utils";
 
 export const initialTree: Tree = [
-  getFolder("components", [
-    getFolder("Library", [
-      getComponentFolder("AddLibraryItem"),
-      getComponentFolder("LibraryItem"),
-      ...getComponentFiles("Library"),
+  buildFolder("components", [
+    buildFolder("Library", [
+      buildComponentFolder("AddLibraryItem"),
+      buildComponentFolder("LibraryItem"),
+      ...buildComponentFiles("Library"),
     ]),
-    getComponentFolder("Button"),
-    getComponentFolder("Icon", true),
+    buildComponentFolder("Button"),
+    buildComponentFolder("Icon", true),
   ]),
-  getFolder("dependencies", [getFile("utils.ts"), getFile("i18n.ts")], true),
-  getFile("app.tsx"),
-  getFile("globals.css"),
+  buildFolder(
+    "dependencies",
+    [buildFile("utils.ts"), buildFile("i18n.ts")],
+    true
+  ),
+  buildFile("app.tsx"),
+  buildFile("globals.css"),
 ];

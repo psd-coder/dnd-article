@@ -31,14 +31,13 @@ import { SortableTreeItem } from "./SortableTreeItem";
 import { FlattenedItem } from "./types";
 import {
   buildTree,
-  filterCollapsedItems,
+  getRenderedFlattenedItems,
   flattenTree,
   getProjection,
-  isFlattenedFolder,
   updateTreeItem,
 } from "./utils";
+import { isFlattenedFolder } from "./types";
 
-const DEPTH_INDENTATION = 12;
 const MEASURING = {
   droppable: {
     strategy: MeasuringStrategy.Always,
@@ -96,28 +95,24 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   tree,
   onChange,
 }) => {
+  const sensors = useSensors(...SENSOR_CONFIGS);
   const [activeId, setActiveId] = useState<TreeId | null>(null);
   const [overId, setOverId] = useState<TreeId | null>(null);
   const [offsetLeft, setOffsetLeft] = useState(0);
-  const flattenedItems = useMemo(
-    () => filterCollapsedItems(flattenTree(tree), activeId),
-    [tree, activeId]
+  const flattenedItems = flattenTree(tree);
+  const renderedItems = useMemo(
+    () => getRenderedFlattenedItems(flattenedItems, activeId),
+    [flattenedItems, activeId]
   );
-
-  const projected =
-    activeId && overId
-      ? getProjection(
-          flattenedItems,
-          activeId,
-          overId,
-          offsetLeft,
-          DEPTH_INDENTATION
-        )
-      : null;
-  const sensors = useSensors(...SENSOR_CONFIGS);
   const activeItem = activeId
-    ? flattenedItems.find(({ id }) => id === activeId)
+    ? renderedItems.find(({ id }) => id === activeId)
     : null;
+  const projected = getProjection({
+    items: renderedItems,
+    activeId,
+    overId,
+    dragOffset: offsetLeft,
+  });
 
   function handleDragStart({ active }: DragStartEvent) {
     setActiveId(String(active.id));
@@ -136,20 +131,16 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
     resetState();
 
     if (projected && over) {
-      const { depth, parentId } = projected;
-      const clonedItems: FlattenedItem[] = JSON.parse(
-        JSON.stringify(flattenTree(tree))
-      );
+      const clonedItems: FlattenedItem[] = structuredClone(flattenedItems);
       const overIndex = clonedItems.findIndex(({ id }) => id === over.id);
       const activeIndex = clonedItems.findIndex(({ id }) => id === active.id);
-      const activeTreeItem = clonedItems[activeIndex];
 
-      clonedItems[activeIndex] = { ...activeTreeItem, depth, parentId };
+      clonedItems[activeIndex] = { ...clonedItems[activeIndex], ...projected };
 
       const sortedItems = arrayMove(clonedItems, activeIndex, overIndex);
-      const newItems = buildTree(sortedItems);
+      const newTree = buildTree(sortedItems);
 
-      onChange(newItems);
+      onChange(newTree);
     }
   }
 
@@ -181,8 +172,8 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
       measuring={MEASURING}
+      collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragOver={handleDragOver}
@@ -190,11 +181,11 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
       onDragCancel={handleDragCancel}
     >
       <SortableContext
-        items={flattenedItems}
+        items={renderedItems}
         strategy={verticalListSortingStrategy}
       >
         <List>
-          {flattenedItems.map((item) => (
+          {renderedItems.map((item) => (
             <SortableTreeItem
               key={item.id}
               item={{
@@ -214,8 +205,12 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
         </List>
         <Portal>
           <DragOverlay dropAnimation={OVERLAY_DROP_ANIMATION}>
-            {activeId && activeItem ? (
-              <SortableTreeItem id={activeId} item={activeItem} isOverlay />
+            {activeItem ? (
+              <SortableTreeItem
+                id={activeItem.id}
+                item={activeItem}
+                isOverlay
+              />
             ) : null}
           </DragOverlay>
         </Portal>

@@ -1,4 +1,5 @@
 import { forwardRef, ReactNode, ButtonHTMLAttributes } from "react";
+import clsx from "clsx";
 
 import styles from "./ListItem.module.css";
 
@@ -13,9 +14,12 @@ export interface ListItemProps extends ListItemHtmlProps {
 const DepthSpacer: React.FC = () => <span className={styles.depthSpacer} />;
 
 export const ListItem = forwardRef<HTMLButtonElement, ListItemProps>(
-  function ListItem({ depth, startAdornment, name, ...restProps }, ref) {
+  function ListItem(
+    { className, depth, startAdornment, name, ...restProps },
+    ref
+  ) {
     return (
-      <button {...restProps} className={styles.item} ref={ref}>
+      <button {...restProps} className={clsx(styles.item, className)} ref={ref}>
         {Array.from({ length: depth }, (_, i) => (
           <DepthSpacer key={i} />
         ))}

@@ -1,11 +1,7 @@
-.isDragging:not(.isOverlay) {
-  /* opacity: 0.5; */
-}
-
-.isSorting {
+.isDragging {
   opacity: 0.5;
 }
 
 .isOverlay {
-  background: var(--bg-0);
+  background: none;
 }
