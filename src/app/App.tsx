@@ -1,14 +1,14 @@
 import { Panels } from "@/components/Panels";
 import { Panel } from "@/components/Panel";
 import { SortableTree } from "@/components/SortableTree";
-import { initialTree } from "@/data";
+import { buildInitialTree } from "@/data";
 import { useState } from "react";
 
 import "./globals.css";
 
 export const App = () => {
-  const [tree, setTree] = useState(initialTree);
-  const [tree2, setTree2] = useState(initialTree);
+  const [tree, setTree] = useState(buildInitialTree());
+  const [tree2, setTree2] = useState(buildInitialTree());
 
   return (
     <Panels>

@@ -7,7 +7,7 @@ import {
   buildComponentFolder,
 } from "./utils";
 
-export const initialTree: Tree = [
+export const buildInitialTree = (): Tree => [
   buildFolder("components", [
     buildFolder("Library", [
       buildComponentFolder("AddLibraryItem"),
