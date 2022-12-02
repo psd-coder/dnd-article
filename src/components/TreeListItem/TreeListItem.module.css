@@ -10,7 +10,7 @@
   --indicator-dot-shift: var(--space-2);
   --indicator-dot-radius: 3px;
   --indicator-shift: calc(
-    var(--indicator-depth-width) + var(--indicator-dot-shift)
+    var(--item-indicator-depth-width) + var(--indicator-dot-shift)
   );
 
   position: absolute;
@@ -56,13 +56,13 @@
   position: relative;
   height: 100%;
 
-  &.withDepthIndicator::after {
+  &::after {
     content: "";
     position: absolute;
     width: 1px;
     top: calc(var(--item-padding) * -1);
     bottom: calc(var(--item-padding) * -1);
-    right: 0;
+    right: calc(var(--item-depth-width) / 3);
     background: var(--color-borders);
   }
 
@@ -79,7 +79,7 @@
 }
 
 .startAdornment {
-  margin: 0 var(--space-2);
+  margin-right: var(--space-2);
   line-height: 0;
 }
 

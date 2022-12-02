@@ -9,8 +9,6 @@ import {
   DragOverEvent,
   DragEndEvent,
   MeasuringStrategy,
-  defaultDropAnimation,
-  DropAnimation,
   closestCenter,
   MouseSensor,
   TouchSensor,
@@ -43,28 +41,6 @@ const LEVEL_INDENTATION = 12;
 const MEASURING = {
   droppable: {
     strategy: MeasuringStrategy.Always,
-  },
-};
-const OVERLAY_DROP_ANIMATION: DropAnimation = {
-  keyframes({ transform }) {
-    return [
-      { opacity: 1, transform: CSS.Transform.toString(transform.initial) },
-      {
-        opacity: 0,
-        transform: CSS.Transform.toString({
-          ...transform.final,
-          x: transform.final.x + 5,
-          y: transform.final.y + 5,
-        }),
-      },
-    ];
-  },
-  easing: "ease-out",
-  sideEffects({ active }) {
-    active.node.animate([{ opacity: 0 }, { opacity: 1 }], {
-      duration: defaultDropAnimation.duration,
-      easing: defaultDropAnimation.easing,
-    });
   },
 };
 
@@ -227,7 +203,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
         </List>
         <Portal>
           <DragOverlay
-            dropAnimation={OVERLAY_DROP_ANIMATION}
+            dropAnimation={null}
             modifiers={getOverlayModifiers(withDropIndicator)}
           >
             {activeItem ? (

@@ -6,11 +6,12 @@ import styles from "./TreeListItem.module.css";
 export type TreeListItemHtmlProps = HTMLAttributes<HTMLLIElement>;
 
 export interface TreeListItemProps extends TreeListItemHtmlProps {
+  className?: string;
+  classNameLabel?: string;
   startAdornment: ReactNode;
   name: string;
   depth: number;
   indentationWidth: number;
-  withDepthIndicator: boolean;
   asIndicator: boolean;
 }
 
@@ -18,11 +19,11 @@ export const TreeListItem = forwardRef<HTMLLIElement, TreeListItemProps>(
   function TreeListItem(
     {
       className,
+      classNameLabel,
       depth,
       startAdornment,
       name,
       indentationWidth,
-      withDepthIndicator,
       asIndicator,
       ...restProps
     },
@@ -33,32 +34,28 @@ export const TreeListItem = forwardRef<HTMLLIElement, TreeListItemProps>(
         ref={ref}
         {...restProps}
         className={clsx(styles.wrapper, { [styles.asIndicator]: asIndicator })}
+        style={
+          {
+            ...restProps.style,
+            "--item-depth-width": `${indentationWidth}px`,
+            "--item-indicator-depth-width": `calc(var(--item-padding) + ${
+              indentationWidth * depth
+            }px)`,
+          } as CSSProperties
+        }
       >
-        {asIndicator && (
-          <div
-            className={styles.indicator}
-            style={
-              {
-                "--indicator-depth-width": `calc(var(--item-padding) + ${
-                  indentationWidth * depth
-                }px)`,
-              } as CSSProperties
-            }
-          />
-        )}
+        {asIndicator && <div className={styles.indicator} />}
         {!asIndicator && (
           <button className={clsx(styles.item, className)}>
             {Array.from({ length: depth }, (_, i) => (
               <span
                 key={i}
-                className={clsx(styles.depthSpacer, {
-                  [styles.withDepthIndicator]: withDepthIndicator,
-                })}
+                className={styles.depthSpacer}
                 style={{ width: indentationWidth }}
               />
             ))}
             <span className={styles.startAdornment}>{startAdornment}</span>
-            <span className={styles.label}>{name}</span>
+            <span className={clsx(styles.label, classNameLabel)}>{name}</span>
           </button>
         )}
       </li>

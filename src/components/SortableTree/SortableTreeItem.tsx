@@ -54,7 +54,7 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   });
   const style: CSSProperties = {
     transform: CSS.Translate.toString(transform),
-    transition,
+    // transition,
   };
 
   return (
@@ -62,11 +62,10 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
       ref={setNodeRef}
       style={style}
       className={clsx({
-        [styles.isDragging]: isDragging,
         [styles.isSorting]: isSorting,
         [styles.isOverlay]: isOverlay,
       })}
-      withDepthIndicator={withDropIndicator ? true : !isSorting}
+      classNameLabel={clsx({ [styles.isDragging]: isDragging })}
       asIndicator={isDragging && withDropIndicator}
       startAdornment={renderAdornment(item)}
       name={item.name}
