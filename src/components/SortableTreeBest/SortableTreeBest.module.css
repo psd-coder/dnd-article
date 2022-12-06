@@ -1,0 +1,11 @@
+.container {
+  position: relative;
+}
+
+.indicator {
+  position: absolute;
+  height: 3px;
+  right: 0;
+  z-index: 10;
+  background: #0085ff;
+}
