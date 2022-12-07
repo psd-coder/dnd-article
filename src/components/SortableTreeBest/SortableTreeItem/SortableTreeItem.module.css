@@ -10,13 +10,13 @@
   background: rgba(222, 222, 222, 0.75);
 }
 
-.isOverBefore {
+/* .isOverBefore {
   background: rgba(0, 87, 183, 0.5);
 }
 
 .isOverAfter {
   background: rgba(255, 215, 0, 0.5);
-}
+} */
 
 .isOverlay {
   background: none;

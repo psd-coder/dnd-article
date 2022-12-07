@@ -1,7 +1,6 @@
 // It is based on the SortableTree demo from dnd-kit
 // https://github.com/clauderic/dnd-kit/blob/da7c60dcbb76d89cf1fcb421e69a4abcea2eeebe/stories/3%20-%20Examples/Tree/SortableTree.tsx
-import { useState, useMemo, useRef, CSSProperties, RefObject } from "react";
-import { shallowEqual } from "fast-equals";
+import { useState, useMemo, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -9,231 +8,116 @@ import {
   DragMoveEvent,
   DragOverEvent,
   DragEndEvent,
-  MeasuringStrategy,
   pointerWithin,
-  MouseSensor,
-  TouchSensor,
-  Modifier,
   useSensors,
-  Over,
-  DroppableContainer,
-  MeasuringConfiguration,
-  CollisionDetection,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
-import {
-  calculateCollisionIntersection,
-  Intersection,
-} from "./collissionIntersection";
 import { Portal } from "@/components/Portal";
 import { List } from "@/components/TreeList";
 import { Tree, TreeId } from "@/data";
 import { isFolder } from "@/data/utils";
+import { useDelayedAction } from "@/utils/hooks/useDelayedAction";
 
-import { SortableTreeItem } from "./SortableTreeItem";
-import styles from "./SortableTreeBest.module.css";
-import { FlattenedItem } from "./types";
+import { SortingIndicator } from "./SortingIndicator/SortingIndicator";
+import { SortableTreeItem } from "./SortableTreeItem/SortableTreeItem";
+import { useIntersectionDetection } from "./intersectionDetection";
 import {
-  buildTree,
   getRenderedFlattenedItems,
   flattenTree,
-  getProjection,
   updateTreeItem,
 } from "./utils";
-import { isFlattenedFolder } from "./types";
+import { FlattenedItem, isFlattenedFolder } from "./types";
+import { CollisionDetectionArg, treeId, TypedOver, typedOver } from "./dndkit";
+import {
+  DND_MEASURING,
+  DND_SENSOR_CONFIGS,
+  LEVEL_INDENTATION,
+  FOLDER_AUTO_OPEN_DELAY,
+} from "./constants";
+import styles from "./SortableTreeBest.module.css";
 
-const FOLDER_UNCOLLAPSE_TIMEOUT = 800;
-const LEVEL_INDENTATION = 12;
-const MEASURING: MeasuringConfiguration = {
-  droppable: {
-    strategy: MeasuringStrategy.Always,
-  },
-};
-
-// const getOverlayModifiers = (
-//   withDropIndicator: boolean
-// ): undefined | Modifier[] => {
-//   if (!withDropIndicator) {
-//     return undefined;
-//   }
-
-//   return [
-//     ({ draggingNodeRect, transform, active }) => ({
-//       ...transform,
-//       // x: transform.x + (active?.data.current.depth ?? 0) * LEVEL_INDENTATION,
-//       // y: transform.y + (draggingNodeRect?.height ?? 0) / 2,
-//     }),
-//   ];
-// };
-
-const SENSOR_CONFIGS = [
-  {
-    sensor: MouseSensor,
-    options: {
-      activationConstraint: {
-        distance: 7,
-      },
-    },
-  },
-  {
-    sensor: TouchSensor,
-    options: {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
-    },
-  },
-];
-
-interface SortableTreeProps {
+interface SortableTreeBestProps {
   tree: Tree;
-  withDropIndicator?: boolean;
   onChange: (tree: Tree) => void;
 }
 
-function getIndicatorStyles(
-  containerRef: RefObject<HTMLElement | null>,
-  over: Over | null,
-  intersection: Intersection | null
-): CSSProperties {
-  if (!containerRef.current || !over || !intersection) {
-    return {
-      display: "none",
-    };
-  }
-
-  const INDICATOR_HEIGHT = 3;
-  const marginYOffset = parseInt(
-    window.getComputedStyle(containerRef.current).marginTop,
-    10
-  );
-  const containerYOffset = containerRef.current.getBoundingClientRect().y;
-  const scrollPositionY = containerRef.current.scrollTop;
-  const yOffset = (() => {
-    if (intersection.isBefore) {
-      return over.rect.top - INDICATOR_HEIGHT / 2;
-    }
-
-    if (intersection.isAfter) {
-      return over.rect.bottom - INDICATOR_HEIGHT / 2;
-    }
-
-    return 0;
-  })();
-
-  return {
-    left: intersection.depth * LEVEL_INDENTATION,
-    transform: `translateY(${Math.ceil(
-      yOffset - containerYOffset + scrollPositionY + marginYOffset
-    )}px)`,
-  };
-}
-
-export const SortableTreeBest: React.FC<SortableTreeProps> = ({
+export const SortableTreeBest: React.FC<SortableTreeBestProps> = ({
   tree,
-  withDropIndicator = false,
   onChange,
 }) => {
-  const listRef = useRef<HTMLElement | null>(null);
-  const overCollapsedFolderRef = useRef<number | null>(null);
-  const sensors = useSensors(...SENSOR_CONFIGS);
-  const [intersection, setIntersection] = useState<Intersection | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const sensors = useSensors(...DND_SENSOR_CONFIGS);
   const [activeId, setActiveId] = useState<TreeId | null>(null);
-  const [over, setOver] = useState<Over | null>(null);
-  const [offsetLeft, setOffsetLeft] = useState(0);
-  const flattenedItems = flattenTree(tree);
+  const [over, setOver] = useState<TypedOver | null>(null);
+  const latestCollisionDetectionArgRef = useRef<CollisionDetectionArg | null>(
+    null
+  );
+  const { intersection, recalculateIntersecion } = useIntersectionDetection();
+  const { runActionWithDelay, cancelLastDelayedAction } = useDelayedAction();
 
-  const latestCollisionDetectionArgsRef = useRef<
-    Parameters<CollisionDetection>[0] | null
-  >(null);
   const renderedItems = useMemo(
-    () => getRenderedFlattenedItems(flattenedItems, activeId),
-    [flattenedItems, activeId]
+    () => getRenderedFlattenedItems(flattenTree(tree), activeId),
+    [tree, activeId]
   );
   const activeItem = activeId
     ? renderedItems.find(({ id }) => id === activeId)
     : null;
-  const projected = getProjection({
-    items: renderedItems,
-    activeId,
-    overId: over?.id ? String(over?.id) : null,
-    dragOffset: offsetLeft,
-    indentationWidth: LEVEL_INDENTATION,
-  });
 
-  function handleDragStart({ active }: DragStartEvent) {
-    setActiveId(String(active.id));
+  function resetState() {
+    setActiveId(null);
+    setOver(null);
   }
 
+  function handleDragStart({ active }: DragStartEvent) {
+    setActiveId(treeId(active.id));
+  }
   function handleDragMove(dragMoveEvent: DragMoveEvent) {
-    setOver(dragMoveEvent.over);
-    setOffsetLeft(dragMoveEvent.delta.x);
-
-    const collissionIntersection = calculateCollisionIntersection({
-      active: dragMoveEvent.active,
-      collision: dragMoveEvent.collisions?.[0] ?? null,
-      droppableContainers:
-        latestCollisionDetectionArgsRef.current?.droppableContainers ?? null,
-      pointerCoordinates:
-        latestCollisionDetectionArgsRef.current?.pointerCoordinates ?? null,
-    });
-
-    if (!shallowEqual(intersection, collissionIntersection)) {
-      setIntersection(collissionIntersection);
-    }
+    setOver(typedOver(dragMoveEvent.over));
+    recalculateIntersecion(
+      dragMoveEvent,
+      latestCollisionDetectionArgRef.current
+    );
   }
 
   function handleDragOver(dragOverEvent: DragOverEvent) {
-    setOver(dragOverEvent.over);
+    const over = typedOver(dragOverEvent.over);
+    const overData = over?.data.current;
 
-    if (overCollapsedFolderRef.current) {
-      clearTimeout(overCollapsedFolderRef.current);
-      overCollapsedFolderRef.current = null;
-    }
+    cancelLastDelayedAction();
+    setOver(over);
 
-    if (dragOverEvent.over?.data.current) {
-      const overId = dragOverEvent.over.id;
-      const { isFolder, isCollapsed } = dragOverEvent.over.data.current;
-
-      if (isFolder && isCollapsed) {
-        overCollapsedFolderRef.current = setTimeout(
-          () => handleCollapse(String(overId)),
-          FOLDER_UNCOLLAPSE_TIMEOUT
-        );
-      }
+    if (overData && overData.isFolder && overData.isCollapsed) {
+      runActionWithDelay(
+        () => handleCollapse(treeId(over.id)),
+        FOLDER_AUTO_OPEN_DELAY
+      );
     }
   }
 
   function handleDragEnd({ active, over }: DragEndEvent) {
     resetState();
 
-    if (projected && over) {
-      const clonedItems: FlattenedItem[] = structuredClone(flattenedItems);
-      const overIndex = clonedItems.findIndex(({ id }) => id === over.id);
-      const activeIndex = clonedItems.findIndex(({ id }) => id === active.id);
+    // collissionIntersection
 
-      clonedItems[activeIndex] = { ...clonedItems[activeIndex], ...projected };
+    // if (projected && over) {
+    //   const clonedItems: FlattenedItem[] = structuredClone(flattenedItems);
+    //   const overIndex = clonedItems.findIndex(({ id }) => id === over.id);
+    //   const activeIndex = clonedItems.findIndex(({ id }) => id === active.id);
 
-      const sortedItems = arrayMove(clonedItems, activeIndex, overIndex);
-      const newTree = buildTree(sortedItems);
+    //   clonedItems[activeIndex] = { ...clonedItems[activeIndex], ...projected };
 
-      onChange(newTree);
-    }
+    //   const sortedItems = arrayMove(clonedItems, activeIndex, overIndex);
+    //   const newTree = buildTree(sortedItems);
+
+    //   onChange(newTree);
+    // }
   }
 
   function handleDragCancel() {
     resetState();
-  }
-
-  function resetState() {
-    setOver(null);
-    setActiveId(null);
-    setOffsetLeft(0);
   }
 
   function handleCollapse(id: TreeId) {
@@ -251,18 +135,19 @@ export const SortableTreeBest: React.FC<SortableTreeProps> = ({
     );
   }
 
+  function handleClick(item: FlattenedItem) {
+    if (isFlattenedFolder(item)) {
+      handleCollapse(item.id);
+    }
+  }
+
   return (
     <DndContext
-      id="best"
       sensors={sensors}
-      measuring={MEASURING}
+      measuring={DND_MEASURING}
       collisionDetection={(args) => {
-        latestCollisionDetectionArgsRef.current = args;
-
-        console.log(
-          "collissionDetection:pointerCoordinates",
-          args.pointerCoordinates
-        );
+        // We need this data for calculating intersections in the best way
+        latestCollisionDetectionArgRef.current = args;
 
         return pointerWithin(args);
       }}
@@ -277,40 +162,31 @@ export const SortableTreeBest: React.FC<SortableTreeProps> = ({
         strategy={verticalListSortingStrategy}
       >
         <List className={styles.container} ref={listRef}>
-          {over && (
-            <div
-              className={styles.indicator}
-              style={getIndicatorStyles(listRef, over, intersection)}
-            />
-          )}
+          <SortingIndicator
+            listRef={listRef}
+            over={over}
+            intersection={intersection}
+          />
           {renderedItems.map((item) => (
             <SortableTreeItem
-              withDropIndicator={withDropIndicator}
               key={item.id}
+              withDropIndicator={false}
               item={item}
               overlayIntersection={over?.id === item.id ? intersection : null}
-              onClick={
-                isFlattenedFolder(item)
-                  ? () => handleCollapse(item.id)
-                  : undefined
-              }
               indentationWidth={LEVEL_INDENTATION}
+              onClick={() => handleClick(item)}
             />
           ))}
         </List>
         <Portal>
-          <DragOverlay
-            dropAnimation={null}
-            // modifiers={getOverlayModifiers(withDropIndicator)}
-          >
+          <DragOverlay dropAnimation={null}>
             {activeItem ? (
               <SortableTreeItem
-                overlayIntersection={null}
-                withDropIndicator={withDropIndicator}
-                id={activeItem.id}
+                withDropIndicator={false}
                 item={activeItem}
-                isOverlay
+                overlayIntersection={null}
                 indentationWidth={LEVEL_INDENTATION}
+                isOverlay
               />
             ) : null}
           </DragOverlay>

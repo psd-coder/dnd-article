@@ -1,16 +1,14 @@
-import { ReactElement, forwardRef } from "react";
+import { forwardRef, ReactNode } from "react";
 import clsx from "clsx";
-
-import { TreeListItemProps } from "@/components/TreeListItem";
 
 import styles from "./TreeList.module.css";
 
 export interface ListProps {
   className?: string;
-  children: ReactElement<TreeListItemProps>[];
+  children: ReactNode[];
 }
 
-export const List = forwardRef<HTMLElement, ListProps>(function List(
+export const List = forwardRef<HTMLUListElement, ListProps>(function List(
   { className, children },
   ref
 ) {
