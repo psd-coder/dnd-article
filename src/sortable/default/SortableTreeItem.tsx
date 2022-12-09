@@ -1,14 +1,13 @@
-import { ReactNode } from "react";
-import { AnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
+import { CSSProperties, ReactNode } from "react";
 import clsx from "clsx";
+import { AnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import { TreeListItem, TreeListItemHtmlProps } from "@/components/TreeListItem";
 import { FolderIcon } from "@/components/FolderIcon";
 import { FileIcon } from "@/components/FileIcon";
 
 import { FlattenedItem, isFlattenedFile, isFlattenedFolder } from "../types";
-import { Intersection } from "../intersectionDetection";
-
 import styles from "./SortableTreeItem.module.css";
 
 const animateLayoutChanges: AnimateLayoutChanges = ({
@@ -30,48 +29,45 @@ const renderAdornment = (item: FlattenedItem): ReactNode => {
 
 interface SortableTreeItemProps extends TreeListItemHtmlProps {
   item: FlattenedItem;
-  overlayIntersection: Intersection | null;
   isOverlay?: boolean;
   withDropIndicator: boolean;
   indentationWidth: number;
 }
 
 export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
-  className,
   item,
-  overlayIntersection,
   isOverlay = false,
   withDropIndicator,
   ...props
 }) => {
-  const { isDragging, isSorting, listeners, setNodeRef } = useSortable({
+  const {
+    isDragging,
+    isSorting,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({
     id: item.id,
-    data: {
-      depth: item.depth,
-      isFile: isFlattenedFile(item),
-      isFolder: isFlattenedFolder(item),
-      isCollapsed: isFlattenedFolder(item) && item.collapsed,
-      parentId: item.parentId,
-    },
     animateLayoutChanges,
   });
+  const style: CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+  };
 
   return (
     <TreeListItem
       ref={setNodeRef}
-      className={clsx(className, {
+      style={style}
+      className={clsx({
         [styles.isSorting]: isSorting,
         [styles.isOverlay]: isOverlay,
-        [styles.isOver]: overlayIntersection?.isOver,
-        [styles.isOverBefore]: overlayIntersection?.isBefore,
-        [styles.isOverAfter]: overlayIntersection?.isAfter,
       })}
       classNameLabel={clsx({ [styles.isDragging]: isDragging })}
-      classNameSpacer={clsx({ [styles.overlaySpacer]: isOverlay })}
-      asIndicator={false}
+      asIndicator={isDragging && withDropIndicator}
       startAdornment={renderAdornment(item)}
-      name={item.id}
-      depth={item.depth}
+      name={item.name}
+      depth={isOverlay ? 0 : item.depth}
       {...listeners}
       {...props}
     />

@@ -2,7 +2,6 @@ import {
   Tree,
   TreeId,
   TreeItem,
-  isFile,
   isFolder,
   buildFolder,
   buildFile,

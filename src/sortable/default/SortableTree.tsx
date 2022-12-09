@@ -20,22 +20,21 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Portal } from "@/components/Portal";
 import { List } from "@/components/TreeList";
 import { Tree, TreeId } from "@/data";
 import { isFolder } from "@/data/utils";
 
-import { SortableTreeItem } from "./SortableTreeItem";
-import { FlattenedItem } from "./types";
+import { FlattenedItem, isFlattenedFolder } from "../types";
 import {
   buildTree,
   getRenderedFlattenedItems,
   flattenTree,
-  getProjection,
   updateTreeItem,
-} from "./utils";
-import { isFlattenedFolder } from "./types";
+} from "../utils";
+
+import { SortableTreeItem } from "./SortableTreeItem";
+import { getProjection } from "./projection";
 
 const LEVEL_INDENTATION = 12;
 const MEASURING = {

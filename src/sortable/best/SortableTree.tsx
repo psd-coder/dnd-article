@@ -28,8 +28,8 @@ import {
   getRenderedFlattenedItems,
   flattenTree,
   updateTreeItem,
-} from "./utils";
-import { FlattenedItem, isFlattenedFolder } from "./types";
+} from "../utils";
+import { FlattenedItem, isFlattenedFolder } from "../types";
 import { CollisionDetectionArg, treeId, TypedOver, typedOver } from "./dndkit";
 import {
   DND_MEASURING,
@@ -37,14 +37,14 @@ import {
   LEVEL_INDENTATION,
   FOLDER_AUTO_OPEN_DELAY,
 } from "./constants";
-import styles from "./SortableTreeBest.module.css";
+import styles from "./SortableTree.module.css";
 
-interface SortableTreeBestProps {
+interface SortableTreeProps {
   tree: Tree;
   onChange: (tree: Tree) => void;
 }
 
-export const SortableTreeBest: React.FC<SortableTreeBestProps> = ({
+export const SortableTree: React.FC<SortableTreeProps> = ({
   tree,
   onChange,
 }) => {
