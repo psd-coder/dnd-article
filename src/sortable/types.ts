@@ -3,7 +3,6 @@ import { TreeFile, TreeFolder, TreeId, isFolder, isFile } from "@/data";
 interface FlattenedProps {
   parentId: TreeId | null;
   depth: number;
-  index: number;
 }
 
 export interface FlattenedFolder extends FlattenedProps, TreeFolder {}

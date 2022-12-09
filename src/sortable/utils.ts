@@ -39,8 +39,8 @@ export function flattenTree(
   parentId: TreeId | null = null,
   depth = 0
 ): FlattenedItem[] {
-  return tree.reduce<FlattenedItem[]>((acc, item, index) => {
-    acc.push({ ...item, parentId, depth, index });
+  return tree.reduce<FlattenedItem[]>((acc, item) => {
+    acc.push({ ...item, parentId, depth });
 
     if (isFolder(item)) {
       acc.push(...flattenTree(item.children, item.id, depth + 1));
