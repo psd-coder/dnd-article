@@ -1,24 +1,24 @@
 import { arrayMove } from "@dnd-kit/sortable";
 import { TreeId } from "@/data";
-import { isFlattenedFolder, FlattenedItem } from "../types";
+import { isFlatFolder, FlatItem } from "../types";
 
 function getDragDepth(offset: number, indentationWidth: number) {
   return Math.round(offset / indentationWidth);
 }
 
-function getMaxDepth({ previousItem }: { previousItem?: FlattenedItem }) {
+function getMaxDepth({ previousItem }: { previousItem?: FlatItem }) {
   if (!previousItem) {
     return 0;
   }
 
-  if (isFlattenedFolder(previousItem)) {
+  if (isFlatFolder(previousItem)) {
     return previousItem.depth + 1;
   }
 
   return previousItem.depth;
 }
 
-function getMinDepth({ nextItem }: { nextItem?: FlattenedItem }) {
+function getMinDepth({ nextItem }: { nextItem?: FlatItem }) {
   if (!nextItem) {
     return 0;
   }
@@ -33,10 +33,10 @@ function getProjectedDepth({
   nextItem,
   indentationWidth,
 }: {
-  activeItem: FlattenedItem;
+  activeItem: FlatItem;
   dragOffset: number;
-  previousItem?: FlattenedItem;
-  nextItem?: FlattenedItem;
+  previousItem?: FlatItem;
+  nextItem?: FlatItem;
   indentationWidth: number;
 }) {
   const minDepth = getMinDepth({ nextItem });
@@ -62,7 +62,7 @@ export function getProjection({
   dragOffset,
   indentationWidth,
 }: {
-  items: FlattenedItem[];
+  items: FlatItem[];
   activeId: TreeId | null;
   overId: TreeId | null;
   dragOffset: number;

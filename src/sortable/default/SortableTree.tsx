@@ -25,10 +25,10 @@ import { List } from "@/components/TreeList";
 import { Tree, TreeId } from "@/data";
 import { isFolder } from "@/data/utils";
 
-import { FlattenedItem, isFlattenedFolder } from "../types";
+import { FlatItem, isFlatFolder } from "../types";
 import {
   buildTree,
-  getRenderedFlattenedItems,
+  getRenderedFlatItems,
   flattenTree,
   updateTreeItem,
 } from "../utils";
@@ -93,10 +93,10 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   const [activeId, setActiveId] = useState<TreeId | null>(null);
   const [overId, setOverId] = useState<TreeId | null>(null);
   const [offsetLeft, setOffsetLeft] = useState(0);
-  const flattenedItems = flattenTree(tree);
+  const flatItems = flattenTree(tree);
   const renderedItems = useMemo(
-    () => getRenderedFlattenedItems(flattenedItems, activeId),
-    [flattenedItems, activeId]
+    () => getRenderedFlatItems(flatItems, activeId),
+    [flatItems, activeId]
   );
   const activeItem = activeId
     ? renderedItems.find(({ id }) => id === activeId)
@@ -126,7 +126,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
     resetState();
 
     if (projected && over) {
-      const clonedItems: FlattenedItem[] = structuredClone(flattenedItems);
+      const clonedItems: FlatItem[] = structuredClone(flatItems);
       const overIndex = clonedItems.findIndex(({ id }) => id === over.id);
       const activeIndex = clonedItems.findIndex(({ id }) => id === active.id);
 
@@ -192,9 +192,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
                     : item.depth,
               }}
               onClick={
-                isFlattenedFolder(item)
-                  ? () => handleCollapse(item.id)
-                  : undefined
+                isFlatFolder(item) ? () => handleCollapse(item.id) : undefined
               }
               indentationWidth={LEVEL_INDENTATION}
             />

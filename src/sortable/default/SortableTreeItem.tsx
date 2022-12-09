@@ -7,7 +7,7 @@ import { TreeListItem, TreeListItemHtmlProps } from "@/components/TreeListItem";
 import { FolderIcon } from "@/components/FolderIcon";
 import { FileIcon } from "@/components/FileIcon";
 
-import { FlattenedItem, isFlattenedFile, isFlattenedFolder } from "../types";
+import { FlatItem, isFlatFile, isFlatFolder } from "../types";
 import styles from "./SortableTreeItem.module.css";
 
 const animateLayoutChanges: AnimateLayoutChanges = ({
@@ -15,12 +15,12 @@ const animateLayoutChanges: AnimateLayoutChanges = ({
   wasDragging,
 }) => (isSorting || wasDragging ? false : true);
 
-const renderAdornment = (item: FlattenedItem): ReactNode => {
-  if (isFlattenedFolder(item)) {
+const renderAdornment = (item: FlatItem): ReactNode => {
+  if (isFlatFolder(item)) {
     return <FolderIcon collapsed={item.collapsed} />;
   }
 
-  if (isFlattenedFile(item)) {
+  if (isFlatFile(item)) {
     return <FileIcon filename={item.name} />;
   }
 
@@ -28,7 +28,7 @@ const renderAdornment = (item: FlattenedItem): ReactNode => {
 };
 
 interface SortableTreeItemProps extends TreeListItemHtmlProps {
-  item: FlattenedItem;
+  item: FlatItem;
   isOverlay?: boolean;
   withDropIndicator: boolean;
   indentationWidth: number;

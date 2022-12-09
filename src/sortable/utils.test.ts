@@ -17,24 +17,24 @@ folders[1].children.push(files[0], files[1]);
 folders[0].children.push(folders[1], files[2], files[3]);
 
 const tree = [folders[0], folders[2], files[6], files[7]];
-const getFlattenedItem = (
+const getFlatItem = (
   item: TreeItem,
   parentId: TreeId | null,
   depth: number
 ) => ({ ...item, parentId, depth });
 
 const flattenList = [
-  getFlattenedItem(folders[0], null, 0),
-  getFlattenedItem(folders[1], folders[0].id, 1),
-  getFlattenedItem(files[0], folders[1].id, 2),
-  getFlattenedItem(files[1], folders[1].id, 2),
-  getFlattenedItem(files[2], folders[0].id, 1),
-  getFlattenedItem(files[3], folders[0].id, 1),
-  getFlattenedItem(folders[2], null, 0),
-  getFlattenedItem(files[4], folders[2].id, 1),
-  getFlattenedItem(files[5], folders[2].id, 1),
-  getFlattenedItem(files[6], null, 0),
-  getFlattenedItem(files[7], null, 0),
+  getFlatItem(folders[0], null, 0),
+  getFlatItem(folders[1], folders[0].id, 1),
+  getFlatItem(files[0], folders[1].id, 2),
+  getFlatItem(files[1], folders[1].id, 2),
+  getFlatItem(files[2], folders[0].id, 1),
+  getFlatItem(files[3], folders[0].id, 1),
+  getFlatItem(folders[2], null, 0),
+  getFlatItem(files[4], folders[2].id, 1),
+  getFlatItem(files[5], folders[2].id, 1),
+  getFlatItem(files[6], null, 0),
+  getFlatItem(files[7], null, 0),
 ];
 
 describe("Utils", () => {
@@ -42,7 +42,7 @@ describe("Utils", () => {
     expect(flattenTree(tree)).toStrictEqual(flattenList);
   });
 
-  test("Build correct tree from flattened list", () => {
+  test("Build correct tree from flat list", () => {
     expect(buildTree(flattenList)).toStrictEqual(tree);
   });
 });

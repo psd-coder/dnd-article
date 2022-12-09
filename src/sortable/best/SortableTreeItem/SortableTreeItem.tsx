@@ -6,7 +6,7 @@ import { TreeListItem, TreeListItemHtmlProps } from "@/components/TreeListItem";
 import { FolderIcon } from "@/components/FolderIcon";
 import { FileIcon } from "@/components/FileIcon";
 
-import { FlattenedItem, isFlattenedFile, isFlattenedFolder } from "../../types";
+import { FlatItem, isFlatFile, isFlatFolder } from "../../types";
 import { Intersection } from "../intersectionDetection";
 
 import styles from "./SortableTreeItem.module.css";
@@ -16,12 +16,12 @@ const animateLayoutChanges: AnimateLayoutChanges = ({
   wasDragging,
 }) => (isSorting || wasDragging ? false : true);
 
-const renderAdornment = (item: FlattenedItem): ReactNode => {
-  if (isFlattenedFolder(item)) {
+const renderAdornment = (item: FlatItem): ReactNode => {
+  if (isFlatFolder(item)) {
     return <FolderIcon collapsed={item.collapsed} />;
   }
 
-  if (isFlattenedFile(item)) {
+  if (isFlatFile(item)) {
     return <FileIcon filename={item.name} />;
   }
 
@@ -29,7 +29,7 @@ const renderAdornment = (item: FlattenedItem): ReactNode => {
 };
 
 interface SortableTreeItemProps extends TreeListItemHtmlProps {
-  item: FlattenedItem;
+  item: FlatItem;
   overlayIntersection: Intersection | null;
   isOverlay?: boolean;
   withDropIndicator: boolean;
@@ -48,9 +48,9 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
     id: item.id,
     data: {
       depth: item.depth,
-      isFile: isFlattenedFile(item),
-      isFolder: isFlattenedFolder(item),
-      isCollapsed: isFlattenedFolder(item) && item.collapsed,
+      isFile: isFlatFile(item),
+      isFolder: isFlatFolder(item),
+      isCollapsed: isFlatFolder(item) && item.collapsed,
       parentId: item.parentId,
     },
     animateLayoutChanges,

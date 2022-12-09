@@ -24,12 +24,8 @@ import { useDelayedAction } from "@/utils/hooks/useDelayedAction";
 import { SortingIndicator } from "./SortingIndicator/SortingIndicator";
 import { SortableTreeItem } from "./SortableTreeItem/SortableTreeItem";
 import { useIntersectionDetection } from "./intersectionDetection";
-import {
-  getRenderedFlattenedItems,
-  flattenTree,
-  updateTreeItem,
-} from "../utils";
-import { FlattenedItem, isFlattenedFolder } from "../types";
+import { getRenderedFlatItems, flattenTree, updateTreeItem } from "../utils";
+import { FlatItem, isFlatFolder } from "../types";
 import { CollisionDetectionArg, treeId, TypedOver, typedOver } from "./dndkit";
 import {
   DND_MEASURING,
@@ -59,7 +55,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   const { runActionWithDelay, cancelLastDelayedAction } = useDelayedAction();
 
   const renderedItems = useMemo(
-    () => getRenderedFlattenedItems(flattenTree(tree), activeId),
+    () => getRenderedFlatItems(flattenTree(tree), activeId),
     [tree, activeId]
   );
   const activeItem = activeId
@@ -103,7 +99,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
     // collissionIntersection
 
     // if (projected && over) {
-    //   const clonedItems: FlattenedItem[] = structuredClone(flattenedItems);
+    //   const clonedItems: FlatItem[] = structuredClone(flatItems);
     //   const overIndex = clonedItems.findIndex(({ id }) => id === over.id);
     //   const activeIndex = clonedItems.findIndex(({ id }) => id === active.id);
 
@@ -135,8 +131,8 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
     );
   }
 
-  function handleClick(item: FlattenedItem) {
-    if (isFlattenedFolder(item)) {
+  function handleClick(item: FlatItem) {
+    if (isFlatFolder(item)) {
       handleCollapse(item.id);
     }
   }

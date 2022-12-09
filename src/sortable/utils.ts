@@ -7,7 +7,7 @@ import {
   buildFile,
 } from "@/data";
 
-import { FlattenedItem, isFlattenedFolder } from "./types";
+import { FlatItem, isFlatFolder } from "./types";
 
 export function updateTreeItem(
   tree: Tree,
@@ -31,15 +31,15 @@ export function updateTreeItem(
 
 // ############################################################
 // ############################################################
-// Convertion from Tree -> FlattenedItem[]
+// Convertion from Tree -> FlatItem[]
 // ############################################################
 // ############################################################
 export function flattenTree(
   tree: Tree,
   parentId: TreeId | null = null,
   depth = 0
-): FlattenedItem[] {
-  return tree.reduce<FlattenedItem[]>((acc, item) => {
+): FlatItem[] {
+  return tree.reduce<FlatItem[]>((acc, item) => {
     acc.push({ ...item, parentId, depth });
 
     if (isFolder(item)) {
@@ -50,21 +50,21 @@ export function flattenTree(
   }, []);
 }
 
-export function getRenderedFlattenedItems(
-  flattenedItems: FlattenedItem[],
+export function getRenderedFlatItems(
+  flatItems: FlatItem[],
   activeId: TreeId | null
 ) {
-  const excludeIds = flattenedItems.reduce<TreeId[]>(
+  const excludeIds = flatItems.reduce<TreeId[]>(
     (acc, item) =>
-      isFlattenedFolder(item) && item.collapsed && item.children.length
+      isFlatFolder(item) && item.collapsed && item.children.length
         ? [...acc, item.id]
         : acc,
     activeId ? [activeId] : []
   );
 
-  return flattenedItems.filter((item) => {
+  return flatItems.filter((item) => {
     if (item.parentId && excludeIds.includes(item.parentId)) {
-      if (isFlattenedFolder(item) && item.children.length) {
+      if (isFlatFolder(item) && item.children.length) {
         excludeIds.push(item.id);
       }
 
@@ -77,27 +77,22 @@ export function getRenderedFlattenedItems(
 
 // ############################################################
 // ############################################################
-// Convertion from FlattenedItem[] -> Tree
+// Convertion from FlatItem[] -> Tree
 // ############################################################
 // ############################################################
-function buildTreeItem(flattenedItem: FlattenedItem): TreeItem {
-  if (isFlattenedFolder(flattenedItem)) {
-    return buildFolder(
-      flattenedItem.name,
-      [],
-      flattenedItem.collapsed,
-      flattenedItem.id
-    );
+function buildTreeItem(FlatItem: FlatItem): TreeItem {
+  if (isFlatFolder(FlatItem)) {
+    return buildFolder(FlatItem.name, [], FlatItem.collapsed, FlatItem.id);
   }
 
-  return buildFile(flattenedItem.name, flattenedItem.id);
+  return buildFile(FlatItem.name, FlatItem.id);
 }
 
-export function buildTree(flattenedItems: FlattenedItem[]): Tree {
+export function buildTree(flatItems: FlatItem[]): Tree {
   const result: Tree = [];
   const indexedItems: Record<TreeId, TreeItem> = {};
 
-  for (const item of flattenedItems) {
+  for (const item of flatItems) {
     if (indexedItems[item.id]) {
       // If it is already handle just skip to next
       continue;
@@ -113,16 +108,13 @@ export function buildTree(flattenedItems: FlattenedItem[]): Tree {
     } else {
       // If parent isn't handled yet then we must do it immediately
       if (!indexedItems[item.parentId]) {
-        const flattenedFolderItem = flattenedItems.find(
-          ({ id }) => id === item.parentId
-        );
+        const flatFolderItem = flatItems.find(({ id }) => id === item.parentId);
 
-        if (!flattenedFolderItem) {
+        if (!flatFolderItem) {
           throw new Error("item with parentId must exists");
         }
 
-        indexedItems[flattenedFolderItem.id] =
-          buildTreeItem(flattenedFolderItem);
+        indexedItems[flatFolderItem.id] = buildTreeItem(flatFolderItem);
       }
 
       const parent = indexedItems[item.parentId];

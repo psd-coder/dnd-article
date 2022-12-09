@@ -1,20 +1,18 @@
 import { TreeFile, TreeFolder, TreeId, isFolder, isFile } from "@/data";
 
-interface FlattenedProps {
+interface FlatProps {
   parentId: TreeId | null;
   depth: number;
 }
 
-export interface FlattenedFolder extends FlattenedProps, TreeFolder {}
-export interface FlattenedFile extends FlattenedProps, TreeFile {}
-export type FlattenedItem = FlattenedFolder | FlattenedFile;
+export interface FlatFolder extends FlatProps, TreeFolder {}
+export interface FlatFile extends FlatProps, TreeFile {}
+export type FlatItem = FlatFolder | FlatFile;
 
-export function isFlattenedFolder(
-  item: FlattenedItem
-): item is FlattenedFolder {
+export function isFlatFolder(item: FlatItem): item is FlatFolder {
   return isFolder(item);
 }
 
-export function isFlattenedFile(item: FlattenedItem): item is FlattenedFile {
+export function isFlatFile(item: FlatItem): item is FlatFile {
   return isFile(item);
 }
