@@ -26,7 +26,7 @@ function getMinDepth({ nextItem }: { nextItem?: FlatItem }) {
   return nextItem.depth;
 }
 
-function getProjectedDepth({
+function calculateProjectedDepth({
   activeItem,
   dragOffset,
   previousItem,
@@ -55,7 +55,7 @@ function getProjectedDepth({
   return finalDepth;
 }
 
-export function getProjection({
+export function getProjectedDepth({
   items,
   activeId,
   overId,
@@ -67,7 +67,7 @@ export function getProjection({
   overId: TreeId | null;
   dragOffset: number;
   indentationWidth: number;
-}) {
+}): number | null {
   if (!activeId || !overId) {
     return null;
   }
@@ -78,35 +78,12 @@ export function getProjection({
   const sortedItems = arrayMove(items, activeItemIndex, overItemIndex);
   const previousItem = sortedItems[overItemIndex - 1];
   const nextItem = sortedItems[overItemIndex + 1];
-  const depth = getProjectedDepth({
+
+  return calculateProjectedDepth({
     activeItem,
     nextItem,
     previousItem,
     dragOffset,
     indentationWidth,
   });
-  const parentId = (() => {
-    if (depth === 0 || !previousItem) {
-      return null;
-    }
-
-    if (depth === previousItem.depth) {
-      return previousItem.parentId;
-    }
-
-    if (depth > previousItem.depth) {
-      return previousItem.id;
-    }
-
-    // Find the closest element with the same depth
-    for (let i = overItemIndex - 1; i >= 0; i--) {
-      if (sortedItems[i].depth === depth) {
-        return sortedItems[i].parentId;
-      }
-    }
-
-    return null;
-  })();
-
-  return { depth, parentId };
 }

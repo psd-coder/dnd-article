@@ -7,7 +7,15 @@ import {
   buildFile,
 } from "@/data";
 
-import { FlatItem, isFlatFolder } from "./types";
+import { FlatItem, isFlatFolder } from "../types";
+
+export function flatItem(
+  item: TreeItem,
+  parentId: TreeId | null,
+  depth: number
+) {
+  return { ...item, parentId, depth };
+}
 
 export function updateTreeItem(
   tree: Tree,
@@ -40,7 +48,7 @@ export function flattenTree(
   depth = 0
 ): FlatItem[] {
   return tree.reduce<FlatItem[]>((acc, item) => {
-    acc.push({ ...item, parentId, depth });
+    acc.push(flatItem(item, parentId, depth));
 
     if (isFolder(item)) {
       acc.push(...flattenTree(item.children, item.id, depth + 1));
