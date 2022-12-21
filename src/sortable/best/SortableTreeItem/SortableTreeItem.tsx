@@ -11,14 +11,9 @@ import { Intersection } from "../intersectionDetection";
 
 import styles from "./SortableTreeItem.module.css";
 
-const animateLayoutChanges: AnimateLayoutChanges = ({
-  isSorting,
-  wasDragging,
-}) => (isSorting || wasDragging ? false : true);
-
-const renderAdornment = (item: FlatItem): ReactNode => {
+const renderAdornment = (item: FlatItem, isActive: boolean): ReactNode => {
   if (isFlatFolder(item)) {
-    return <FolderIcon collapsed={item.collapsed} />;
+    return <FolderIcon collapsed={isActive || item.collapsed} />;
   }
 
   if (isFlatFile(item)) {
@@ -44,7 +39,7 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   withDropIndicator,
   ...props
 }) => {
-  const { isDragging, isSorting, listeners, setNodeRef } = useSortable({
+  const { isDragging, isSorting, active, listeners, setNodeRef } = useSortable({
     id: item.id,
     data: {
       depth: item.depth,
@@ -53,7 +48,6 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
       isCollapsed: isFlatFolder(item) && item.collapsed,
       parentId: item.parentId,
     },
-    animateLayoutChanges,
   });
 
   return (
@@ -69,7 +63,10 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
       classNameLabel={clsx({ [styles.isDragging]: isDragging })}
       classNameSpacer={clsx({ [styles.overlaySpacer]: isOverlay })}
       asIndicator={false}
-      startAdornment={renderAdornment(item)}
+      startAdornment={renderAdornment(
+        item,
+        isOverlay || item.id === active?.id
+      )}
       name={item.name}
       depth={item.depth}
       {...listeners}

@@ -10,7 +10,9 @@ import {
   DragEndEvent,
   pointerWithin,
   useSensors,
+  Modifier,
 } from "@dnd-kit/core";
+import { getEventCoordinates } from "@dnd-kit/utilities";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -45,6 +47,29 @@ interface SortableTreeProps {
   tree: Tree;
   onChange: (tree: Tree) => void;
 }
+
+const OVERLAY_MODIFIERS: Modifier[] = [
+  ({ draggingNodeRect, transform, activatorEvent }) => {
+    if (draggingNodeRect && activatorEvent) {
+      const activatorCoordinates = getEventCoordinates(activatorEvent);
+
+      if (!activatorCoordinates) {
+        return transform;
+      }
+
+      const offsetY =
+        activatorCoordinates.y -
+        (draggingNodeRect.top + draggingNodeRect.height / 2);
+
+      return {
+        ...transform,
+        y: transform.y + offsetY,
+      };
+    }
+
+    return transform;
+  },
+];
 
 export const SortableTree: React.FC<SortableTreeProps> = ({
   tree,
@@ -187,7 +212,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
           ))}
         </List>
         <Portal>
-          <DragOverlay dropAnimation={null}>
+          <DragOverlay dropAnimation={null} modifiers={OVERLAY_MODIFIERS}>
             {activeItem ? (
               <SortableTreeItem
                 withDropIndicator={false}
