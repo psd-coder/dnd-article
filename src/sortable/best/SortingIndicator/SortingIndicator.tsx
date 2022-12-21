@@ -26,11 +26,11 @@ function getIndicatorStyle(
   const containerYOffset = containerRef.current.getBoundingClientRect().top;
   const scrollPositionY = containerRef.current.scrollTop;
   const yOffset = (() => {
-    if (intersection.isBefore) {
+    if (intersection.isOverTop) {
       return over.rect.top - INDICATOR_HEIGHT / 2;
     }
 
-    if (intersection.isAfter) {
+    if (intersection.isOverBottom) {
       return over.rect.bottom - INDICATOR_HEIGHT / 2;
     }
 

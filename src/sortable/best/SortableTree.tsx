@@ -24,8 +24,14 @@ import { useDelayedAction } from "@/utils/hooks/useDelayedAction";
 import { SortingIndicator } from "./SortingIndicator/SortingIndicator";
 import { SortableTreeItem } from "./SortableTreeItem/SortableTreeItem";
 import { useIntersectionDetection } from "./intersectionDetection";
-import { getRenderedFlatItems, flattenTree, updateTreeItem } from "../utils";
+import {
+  getRenderedFlatItems,
+  flattenTree,
+  updateTreeItem,
+  buildTree,
+} from "../utils/tree";
 import { FlatItem, isFlatFolder } from "../types";
+import { moveItems } from "../utils/move";
 import { CollisionDetectionArg, treeId, TypedOver, typedOver } from "./dndkit";
 import {
   DND_MEASURING,
@@ -54,9 +60,10 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   const { intersection, recalculateIntersecion } = useIntersectionDetection();
   const { runActionWithDelay, cancelLastDelayedAction } = useDelayedAction();
 
+  const flatItems = useMemo(() => flattenTree(tree), [tree]);
   const renderedItems = useMemo(
-    () => getRenderedFlatItems(flattenTree(tree), activeId),
-    [tree, activeId]
+    () => getRenderedFlatItems(flatItems, activeId),
+    [flatItems, activeId]
   );
   const activeItem = activeId
     ? renderedItems.find(({ id }) => id === activeId)
@@ -70,24 +77,25 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   function handleDragStart({ active }: DragStartEvent) {
     setActiveId(treeId(active.id));
   }
+
+  function handleDragOver(dragOverEvent: DragOverEvent) {
+    setOver(typedOver(dragOverEvent.over));
+  }
+
   function handleDragMove(dragMoveEvent: DragMoveEvent) {
-    setOver(typedOver(dragMoveEvent.over));
-    recalculateIntersecion(
+    const newIntersection = recalculateIntersecion(
       dragMoveEvent,
       latestCollisionDetectionArgRef.current
     );
-  }
 
-  function handleDragOver(dragOverEvent: DragOverEvent) {
-    const over = typedOver(dragOverEvent.over);
-    const overData = over?.data.current;
+    const isCollapsedFolder =
+      over && over.data.current?.isFolder && over.data.current?.isCollapsed;
 
-    cancelLastDelayedAction();
-    setOver(over);
-
-    if (overData && overData.isFolder && overData.isCollapsed) {
+    if (isCollapsedFolder && !newIntersection?.isOverMiddle) {
+      cancelLastDelayedAction();
+    } else {
       runActionWithDelay(
-        () => handleCollapse(treeId(over.id)),
+        () => handleCollapse(treeId(over!.id), false),
         FOLDER_AUTO_OPEN_DELAY
       );
     }
@@ -96,33 +104,37 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   function handleDragEnd({ active, over }: DragEndEvent) {
     resetState();
 
-    // collissionIntersection
+    if (over && intersection?.target) {
+      const target = intersection.target;
+      const fromIndex = flatItems.findIndex(({ id }) => id === active.id);
+      const overIndex = flatItems.findIndex(({ id }) => id === over.id);
+      const toIndex =
+        intersection.isOverTop || fromIndex === overIndex
+          ? overIndex
+          : overIndex + 1;
 
-    // if (projected && over) {
-    //   const clonedItems: FlatItem[] = structuredClone(flatItems);
-    //   const overIndex = clonedItems.findIndex(({ id }) => id === over.id);
-    //   const activeIndex = clonedItems.findIndex(({ id }) => id === active.id);
+      const movedFlatItems = moveItems(
+        flatItems,
+        fromIndex,
+        toIndex,
+        target.depth
+      );
 
-    //   clonedItems[activeIndex] = { ...clonedItems[activeIndex], ...projected };
-
-    //   const sortedItems = arrayMove(clonedItems, activeIndex, overIndex);
-    //   const newTree = buildTree(sortedItems);
-
-    //   onChange(newTree);
-    // }
+      onChange(buildTree(movedFlatItems));
+    }
   }
 
   function handleDragCancel() {
     resetState();
   }
 
-  function handleCollapse(id: TreeId) {
+  function handleCollapse(id: TreeId, force?: boolean) {
     onChange(
       updateTreeItem(tree, id, (item) => {
         if (isFolder(item)) {
           return {
             ...item,
-            collapsed: !item.collapsed,
+            collapsed: typeof force === "boolean" ? force : !item.collapsed,
           };
         }
 

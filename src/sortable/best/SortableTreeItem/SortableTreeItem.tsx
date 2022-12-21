@@ -62,15 +62,15 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
       className={clsx(className, {
         [styles.isSorting]: isSorting,
         [styles.isOverlay]: isOverlay,
-        [styles.isOver]: overlayIntersection?.isOver,
-        [styles.isOverBefore]: overlayIntersection?.isBefore,
-        [styles.isOverAfter]: overlayIntersection?.isAfter,
+        [styles.isOverTop]: overlayIntersection?.isOverTop,
+        [styles.isOverMiddle]: overlayIntersection?.isOverMiddle,
+        [styles.isOverBottom]: overlayIntersection?.isOverBottom,
       })}
       classNameLabel={clsx({ [styles.isDragging]: isDragging })}
       classNameSpacer={clsx({ [styles.overlaySpacer]: isOverlay })}
       asIndicator={false}
       startAdornment={renderAdornment(item)}
-      name={item.id}
+      name={item.name}
       depth={item.depth}
       {...listeners}
       {...props}

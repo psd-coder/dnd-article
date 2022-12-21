@@ -6,15 +6,16 @@
   pointer-events: none;
 }
 
-.isOver {
+.isOverMiddle {
   background: rgba(222, 222, 222, 0.75);
 }
 
-/* .isOverBefore {
+/* .isOverTop {
   background: rgba(0, 87, 183, 0.5);
 }
 
-.isOverAfter {
+
+.isOverBottom {
   background: rgba(255, 215, 0, 0.5);
 } */
 

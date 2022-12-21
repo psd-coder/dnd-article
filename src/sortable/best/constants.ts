@@ -33,4 +33,4 @@ export const DND_SENSOR_CONFIGS = [
 
 export const LEVEL_INDENTATION = 12;
 export const FOLDER_AUTO_OPEN_DELAY = 800;
-export const BETWEEN_FOLDERS_GAP = 8;
+export const BETWEEN_FOLDERS_GAP = 10;

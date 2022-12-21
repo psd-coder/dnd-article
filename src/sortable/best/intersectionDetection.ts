@@ -17,6 +17,7 @@ import {
 } from "./dndkit";
 
 interface IntersectionTarget {
+  id: UniqueIdentifier;
   parentId: UniqueIdentifier | null;
   depth: number;
   index: number;
@@ -24,8 +25,9 @@ interface IntersectionTarget {
 
 export interface Intersection {
   isOver: boolean;
-  isBefore: boolean;
-  isAfter: boolean;
+  isOverTop: boolean;
+  isOverMiddle: boolean;
+  isOverBottom: boolean;
   target: IntersectionTarget | null;
 }
 
@@ -35,8 +37,9 @@ interface CalculateTargetOptions {
   previousItem: TypedDroppableContainer | null;
   overItem: TypedDroppableContainer;
   nextItem: TypedDroppableContainer | null;
-  isBefore: boolean;
-  isAfter: boolean;
+  isOverTop: boolean;
+  isOverMiddle: boolean;
+  isOverBottom: boolean;
   activeDragDelta: Coordinates;
   indentationWidth: number;
 }
@@ -55,48 +58,48 @@ function getDroppableContainerData(
 }
 
 function getMinDepth({
+  active,
   overItem,
   nextItem,
-  isAfter,
-  isBefore,
+  isOverBottom,
 }: CalculateTargetOptions) {
   const overData = getDroppableContainerData(overItem);
 
-  if (overData.isFolder) {
-    if (isBefore) {
-      return overData.depth;
-    } else if (isAfter) {
-      return overData.depth + 1;
-    }
-  }
-
-  if (overData.isFile) {
-    if (isAfter && nextItem?.data.current) {
+  if (isOverBottom) {
+    if (
+      nextItem?.data.current &&
+      overData.depth > nextItem.data.current.depth
+    ) {
       return nextItem.data.current.depth;
     }
 
-    return overData.depth;
+    if (active.id !== overItem.id) {
+      return overData.depth + 1;
+    }
   }
 
-  return 0;
+  return overData.depth;
 }
 
 function getMaxDepth({
+  active,
   overItem,
   previousItem,
-  isBefore,
-  isAfter,
+  isOverTop,
+  isOverBottom,
 }: CalculateTargetOptions) {
   const overData = getDroppableContainerData(overItem);
 
-  if (overData.isFolder) {
-    if (isBefore && previousItem?.data.current?.isFile) {
-      return previousItem?.data.current.depth;
-    }
+  if (
+    isOverTop &&
+    previousItem?.data.current &&
+    overData.depth < previousItem.data.current.depth
+  ) {
+    return previousItem.data.current.depth;
+  }
 
-    if (isAfter) {
-      return overData.depth + 1;
-    }
+  if (isOverBottom && overData.isFolder && active.id !== overItem.id) {
+    return overData.depth + 1;
   }
 
   return overData.depth;
@@ -120,7 +123,8 @@ function getProjectedDepth(options: CalculateTargetOptions) {
 function calculateTarget(
   options: CalculateTargetOptions
 ): IntersectionTarget | null {
-  const { droppableContainers, active, previousItem, overItem } = options;
+  const { droppableContainers, active, previousItem, overItem, isOverTop } =
+    options;
 
   if (!active || !overItem) {
     return null;
@@ -160,9 +164,10 @@ function calculateTarget(
   })();
 
   return {
+    id: overItem.id,
     parentId,
     depth,
-    index: overItemIndex,
+    index: isOverTop ? overItemIndex : overItemIndex + 1,
   };
 }
 
@@ -194,7 +199,7 @@ function detectIntersection({
   indentationWidth,
   activeDragDelta,
 }: DetectIntersectionOptions): Intersection | null {
-  if (!active || !collision?.data || active.id === collision.id) {
+  if (!active || !collision?.data) {
     return null;
   }
 
@@ -217,28 +222,22 @@ function detectIntersection({
   assertNonNullable(overRect, "Over must have rect");
 
   const isOver = overData.isFolder && overData.isCollapsed;
-  const isBefore = (() => {
-    if (collissionY < overRect.top || previousItem?.id === active.id) {
-      return false;
-    }
-
-    if (overData.isFolder && overData.isCollapsed) {
+  const isOverItself = active.id === collision.id;
+  const isOverTop = (() => {
+    if (!isOverItself && overData.isFolder && overData.isCollapsed) {
       return collissionY <= overRect.top + BETWEEN_FOLDERS_GAP / 2;
     }
 
     return collissionY <= overRect.top + overRect.height / 2;
   })();
-  const isAfter = (() => {
-    if (collissionY > overRect.bottom || nextItem?.id === active.id) {
-      return false;
-    }
-
-    if (overData.isFolder && overData.isCollapsed) {
+  const isOverBottom = (() => {
+    if (!isOverItself && overData.isFolder && overData.isCollapsed) {
       return collissionY >= overRect.bottom - BETWEEN_FOLDERS_GAP / 2;
     }
 
     return collissionY > overRect.bottom - overRect.height / 2;
   })();
+  const isOverMiddle = isOver && !isOverTop && !isOverBottom;
 
   const target = overItem
     ? calculateTarget({
@@ -247,8 +246,9 @@ function detectIntersection({
         previousItem,
         overItem,
         nextItem,
-        isAfter,
-        isBefore,
+        isOverBottom,
+        isOverMiddle,
+        isOverTop,
         activeDragDelta,
         indentationWidth,
       })
@@ -256,8 +256,9 @@ function detectIntersection({
 
   return {
     isOver,
-    isBefore,
-    isAfter,
+    isOverTop,
+    isOverMiddle,
+    isOverBottom,
     target,
   };
 }
@@ -291,6 +292,8 @@ export function useIntersectionDetection() {
       if (!shallowEqual(intersection, newIntersection)) {
         setIntersection(newIntersection);
       }
+
+      return newIntersection;
     },
     [intersection]
   );
