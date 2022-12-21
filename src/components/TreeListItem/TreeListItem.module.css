@@ -9,9 +9,7 @@
   --indicator-height: var(--space-1);
   --indicator-dot-shift: var(--space-2);
   --indicator-dot-radius: 3px;
-  --indicator-shift: calc(
-    var(--item-indicator-depth-width) + var(--indicator-dot-shift)
-  );
+  --indicator-shift: calc(var(--item-indicator-depth-width));
 
   position: absolute;
   top: calc(var(--indicator-height) / -2);
