@@ -1,6 +1,22 @@
 .indicator {
+  --indicator-height: 2px;
+  --indicator-dot-size: 3px;
+
   position: absolute;
   right: 0;
   z-index: 10;
   background: var(--color-accent);
+
+  &.withDot::before {
+    content: "";
+    position: absolute;
+    left: calc((var(--indicator-height) + var(--indicator-dot-size)) * -1);
+    transform: translateY(
+      calc((var(--indicator-height) - var(--indicator-dot-size)) / 2)
+    );
+    height: var(--indicator-dot-size);
+    width: var(--indicator-dot-size);
+    border-radius: var(--radius-circle);
+    background: var(--color-accent);
+  }
 }

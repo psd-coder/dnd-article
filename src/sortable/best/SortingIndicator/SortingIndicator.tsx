@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { RefObject, CSSProperties } from "react";
 
 import { LEVEL_INDENTATION } from "../constants";
@@ -6,12 +7,14 @@ import { Intersection } from "../intersectionDetection";
 
 import styles from "./SortingIndicator.module.css";
 
-const INDICATOR_HEIGHT = 3;
+const DOT_SIZE = 3;
+const INDICATOR_HEIGHT = 2;
 
 function getIndicatorStyle(
   containerRef: RefObject<HTMLElement | null>,
   over: TypedOver | null,
-  intersection: Intersection | null
+  intersection: Intersection | null,
+  withDot: boolean
 ): CSSProperties {
   if (!over || !containerRef?.current || !intersection) {
     return {
@@ -39,7 +42,9 @@ function getIndicatorStyle(
 
   return {
     height: INDICATOR_HEIGHT,
-    left: (intersection.target?.depth ?? 0) * LEVEL_INDENTATION,
+    left:
+      (intersection.target?.depth ?? 0) * LEVEL_INDENTATION +
+      (withDot ? DOT_SIZE + INDICATOR_HEIGHT : 0),
     transform: `translateY(${Math.ceil(
       yOffset - containerYOffset + scrollPositionY + marginYOffset
     )}px)`,
@@ -50,15 +55,17 @@ interface SortingIndicatorProps {
   listRef: RefObject<HTMLElement>;
   over: TypedOver | null;
   intersection: Intersection | null;
+  withDot?: boolean;
 }
 
 export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
   listRef,
   over,
   intersection,
+  withDot = true,
 }) => (
   <div
-    className={styles.indicator}
-    style={getIndicatorStyle(listRef, over, intersection)}
+    className={clsx(styles.indicator, { [styles.withDot]: withDot })}
+    style={getIndicatorStyle(listRef, over, intersection, withDot)}
   />
 );
