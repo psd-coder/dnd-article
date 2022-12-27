@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { AnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
 import clsx from "clsx";
 
 import { TreeListItem, TreeListItemHtmlProps } from "@/components/TreeListItem";
@@ -47,6 +47,7 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
       isFolder: isFlatFolder(item),
       isCollapsed: isFlatFolder(item) && item.collapsed,
       parentId: item.parentId,
+      childrenCount: isFlatFolder(item) ? item.children.length : 0,
     },
   });
 

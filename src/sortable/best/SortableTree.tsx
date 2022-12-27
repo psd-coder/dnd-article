@@ -7,7 +7,6 @@ import {
   DragStartEvent,
   DragMoveEvent,
   DragOverEvent,
-  DragEndEvent,
   pointerWithin,
   useSensors,
   Modifier,
@@ -33,7 +32,6 @@ import {
   buildTree,
 } from "../utils/tree";
 import { FlatItem, isFlatFolder } from "../types";
-import { moveItems } from "../utils/move";
 import { CollisionDetectionArg, treeId, TypedOver, typedOver } from "./dndkit";
 import {
   DND_MEASURING,
@@ -42,6 +40,7 @@ import {
   FOLDER_AUTO_OPEN_DELAY,
 } from "./constants";
 import styles from "./SortableTree.module.css";
+import { moveItemInFlatList } from "./utils";
 
 interface SortableTreeProps {
   tree: Tree;
@@ -116,7 +115,11 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
     const isCollapsedFolder =
       over && over.data.current?.isFolder && over.data.current?.isCollapsed;
 
-    if (isCollapsedFolder && !newIntersection?.isOverMiddle) {
+    if (!isCollapsedFolder) {
+      return;
+    }
+
+    if (!newIntersection?.isOverMiddle) {
       cancelLastDelayedAction();
     } else {
       runActionWithDelay(
@@ -126,26 +129,12 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
     }
   }
 
-  function handleDragEnd({ active, over }: DragEndEvent) {
+  function handleDragEnd() {
+    cancelLastDelayedAction();
     resetState();
 
-    if (over && intersection?.target) {
-      const target = intersection.target;
-      const fromIndex = flatItems.findIndex(({ id }) => id === active.id);
-      const overIndex = flatItems.findIndex(({ id }) => id === over.id);
-      const toIndex =
-        intersection.isOverTop || fromIndex === overIndex
-          ? overIndex
-          : overIndex + 1;
-
-      const movedFlatItems = moveItems(
-        flatItems,
-        fromIndex,
-        toIndex,
-        target.depth
-      );
-
-      onChange(buildTree(movedFlatItems));
+    if (intersection) {
+      onChange(buildTree(moveItemInFlatList(flatItems, intersection)));
     }
   }
 

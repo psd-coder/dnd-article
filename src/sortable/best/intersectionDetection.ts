@@ -1,6 +1,11 @@
 import { useState, useCallback } from "react";
 import { shallowEqual } from "fast-equals";
-import { Collision, UniqueIdentifier, DragMoveEvent } from "@dnd-kit/core";
+import {
+  Collision,
+  UniqueIdentifier,
+  DragMoveEvent,
+  Data,
+} from "@dnd-kit/core";
 import { SortableData } from "@dnd-kit/sortable";
 import { Coordinates } from "@dnd-kit/utilities";
 import { assertNonNullable } from "@/utils/assertNonNullable";
@@ -17,18 +22,20 @@ import {
 } from "./dndkit";
 
 interface IntersectionTarget {
-  id: UniqueIdentifier;
+  overData: Data<ItemData>;
   parentId: UniqueIdentifier | null;
   depth: number;
   index: number;
 }
 
 export interface Intersection {
+  activeId: UniqueIdentifier;
+  overId: UniqueIdentifier;
   isOver: boolean;
   isOverTop: boolean;
   isOverMiddle: boolean;
   isOverBottom: boolean;
-  target: IntersectionTarget | null;
+  target: IntersectionTarget;
 }
 
 interface CalculateTargetOptions {
@@ -120,22 +127,26 @@ function getProjectedDepth(options: CalculateTargetOptions) {
   return clamp(minDepth, active.data.current.depth + dragDepth, maxDepth);
 }
 
-function calculateTarget(
-  options: CalculateTargetOptions
-): IntersectionTarget | null {
+function calculateTarget(options: CalculateTargetOptions): IntersectionTarget {
   const { droppableContainers, active, previousItem, overItem, isOverTop } =
     options;
+  const overData = overItem.data.current;
 
-  if (!active || !overItem) {
-    return null;
-  }
+  assertNonNullable(overData, "overItem must contain current data");
 
-  const depth = getProjectedDepth(options);
   const overItemIndex = droppableContainers.findIndex(
     (dc) => dc.id === active.id
   );
+  const isOverCollapsedFolder = overData.isFolder && overData.isCollapsed;
+  const depth = isOverCollapsedFolder
+    ? overData.depth + 1
+    : getProjectedDepth(options);
   const parentId = (() => {
     const previousData = previousItem?.data.current;
+
+    if (isOverCollapsedFolder) {
+      return overItem.id;
+    }
 
     if (depth === 0 || !previousData) {
       return null;
@@ -164,10 +175,10 @@ function calculateTarget(
   })();
 
   return {
-    id: overItem.id,
     parentId,
     depth,
     index: isOverTop ? overItemIndex : overItemIndex + 1,
+    overData,
   };
 }
 
@@ -239,27 +250,29 @@ function detectIntersection({
   })();
   const isOverMiddle = isOver && !isOverTop && !isOverBottom;
 
-  const target = overItem
-    ? calculateTarget({
-        droppableContainers,
-        active,
-        previousItem,
-        overItem,
-        nextItem,
-        isOverBottom,
-        isOverMiddle,
-        isOverTop,
-        activeDragDelta,
-        indentationWidth,
-      })
-    : null;
+  if (!overItem) {
+    return null;
+  }
 
   return {
+    activeId: active.id,
+    overId: overItem.id,
     isOver,
     isOverTop,
     isOverMiddle,
     isOverBottom,
-    target,
+    target: calculateTarget({
+      droppableContainers,
+      active,
+      previousItem,
+      overItem,
+      nextItem,
+      isOverBottom,
+      isOverMiddle,
+      isOverTop,
+      activeDragDelta,
+      indentationWidth,
+    }),
   };
 }
 

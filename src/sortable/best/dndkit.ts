@@ -13,6 +13,7 @@ export interface ItemData {
   isFolder: boolean;
   isCollapsed: boolean;
   parentId: UniqueIdentifier | null;
+  childrenCount: number;
 }
 
 type TypedType<T extends { data: unknown }> = Omit<T, "data"> & {
