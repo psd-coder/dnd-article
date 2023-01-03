@@ -27,7 +27,6 @@ interface SortableTreeItemProps extends TreeListItemHtmlProps {
   item: FlatItem;
   overlayIntersection: Intersection | null;
   isOverlay?: boolean;
-  withDropIndicator: boolean;
   indentationWidth: number;
 }
 
@@ -36,7 +35,6 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   item,
   overlayIntersection,
   isOverlay = false,
-  withDropIndicator,
   ...props
 }) => {
   const { isDragging, isSorting, active, listeners, setNodeRef } = useSortable({

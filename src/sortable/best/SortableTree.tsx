@@ -192,7 +192,6 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
           {renderedItems.map((item) => (
             <SortableTreeItem
               key={item.id}
-              withDropIndicator={false}
               item={item}
               overlayIntersection={over?.id === item.id ? intersection : null}
               indentationWidth={LEVEL_INDENTATION}
@@ -204,7 +203,6 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
           <DragOverlay dropAnimation={null} modifiers={OVERLAY_MODIFIERS}>
             {activeItem ? (
               <SortableTreeItem
-                withDropIndicator={false}
                 item={activeItem}
                 overlayIntersection={null}
                 indentationWidth={LEVEL_INDENTATION}
