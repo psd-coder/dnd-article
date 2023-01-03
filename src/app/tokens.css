@@ -6,6 +6,7 @@
 
   --bg-0: #fff;
   --bg-overlay: rgba(222, 222, 222, 0.75);
+  --bg-overlay-active: rgba(0, 102, 255, 0.08);
 
   --space-1: 2px;
   --space-2: 4px;

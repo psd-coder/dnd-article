@@ -41,6 +41,7 @@ import {
 } from "./constants";
 import styles from "./SortableTree.module.css";
 import { moveItemInFlatList } from "./utils";
+import { OverGroupHighlighting } from "./OverGroupHighlighting/OverGroupHighlighting";
 
 interface SortableTreeProps {
   tree: Tree;
@@ -81,7 +82,8 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   const latestCollisionDetectionArgRef = useRef<CollisionDetectionArg | null>(
     null
   );
-  const { intersection, recalculateIntersecion } = useIntersectionDetection();
+  const { intersection, recalculateIntersecion, resetIntersection } =
+    useIntersectionDetection();
   const { runActionWithDelay, cancelLastDelayedAction } = useDelayedAction();
 
   const flatItems = useMemo(() => flattenTree(tree), [tree]);
@@ -96,6 +98,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   function resetState() {
     setActiveId(null);
     setOver(null);
+    resetIntersection();
   }
 
   function handleDragStart({ active }: DragStartEvent) {
@@ -184,8 +187,12 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
         strategy={verticalListSortingStrategy}
       >
         <List className={styles.container} ref={listRef}>
+          <OverGroupHighlighting
+            containerRef={listRef}
+            intersection={intersection}
+          />
           <SortingIndicator
-            listRef={listRef}
+            containerRef={listRef}
             over={over}
             intersection={intersection}
           />

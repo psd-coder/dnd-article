@@ -1,6 +1,30 @@
+import { RefObject } from "react";
 import { FlatItem, isFlatFolder } from "../types";
 import { moveItems } from "../utils/move";
 import { Intersection } from "./intersectionDetection";
+
+export function compensateContainerVerticalOffset(
+  containerRef: RefObject<HTMLElement | null>,
+  offset: number,
+  includePadding = false
+) {
+  if (!containerRef.current) {
+    return offset;
+  }
+  const computedStyles = window.getComputedStyle(containerRef.current);
+  const marginTop = parseInt(computedStyles.marginTop, 10);
+  const paddingTop = parseInt(computedStyles.paddingTop, 10);
+  const containerYOffset = containerRef.current.getBoundingClientRect().top;
+  const scrollPositionY = containerRef.current.scrollTop;
+
+  return (
+    offset -
+    containerYOffset +
+    scrollPositionY +
+    marginTop +
+    (includePadding ? paddingTop : 0)
+  );
+}
 
 export function moveItemInFlatList(
   flatItems: FlatItem[],

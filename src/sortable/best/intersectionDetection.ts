@@ -28,14 +28,22 @@ interface IntersectionTarget {
   index: number;
 }
 
-export interface Intersection {
-  activeId: UniqueIdentifier;
-  overId: UniqueIdentifier;
-  isOver: boolean;
+interface OverGroupBoundaries {
+  top: number;
+  height: number;
+}
+
+interface OverPart {
   isOverTop: boolean;
   isOverMiddle: boolean;
   isOverBottom: boolean;
+}
+
+export interface Intersection extends OverPart {
+  activeId: UniqueIdentifier;
+  overId: UniqueIdentifier;
   target: IntersectionTarget;
+  overGroupBoundaries: OverGroupBoundaries | null;
 }
 
 interface CalculateTargetOptions {
@@ -202,14 +210,75 @@ function getDroppableContainerById(
   return droppableContainers.find((dc) => dc.id === id) ?? null;
 }
 
-function detectIntersection({
-  active,
-  collision,
-  droppableContainers,
-  pointerCoordinates,
-  indentationWidth,
-  activeDragDelta,
-}: DetectIntersectionOptions): Intersection | null {
+function getOverBoundaries(
+  { collision, droppableContainers }: DetectIntersectionOptions,
+  target: IntersectionTarget,
+  { isOverTop }: OverPart
+): OverGroupBoundaries | null {
+  if (!collision?.data) {
+    return null;
+  }
+
+  const collisionData = getDroppableContainerData(
+    collision?.data?.droppableContainer
+  );
+  const startItemId =
+    collisionData.isFolder && !isOverTop && !collisionData.isCollapsed
+      ? collision.id
+      : target.parentId;
+  const startIndex = droppableContainers.findIndex(
+    (item) => item.id === startItemId
+  );
+  const startFolder = droppableContainers[startIndex];
+
+  if (!startFolder) {
+    return null;
+  }
+
+  const top = startFolder.rect.current?.top ?? 0;
+  const bottom = (() => {
+    if (
+      startFolder.data.current?.isFolder &&
+      startFolder.data.current?.isCollapsed
+    ) {
+      return startFolder.rect.current?.bottom ?? 0;
+    }
+
+    for (
+      let i = startIndex + 1, ii = droppableContainers.length;
+      i <= ii;
+      i++
+    ) {
+      const droppableContainerData = getDroppableContainerData(
+        droppableContainers[i]
+      );
+
+      if (droppableContainerData.depth < target.depth) {
+        return droppableContainers[i].rect.current?.top ?? 0;
+      }
+    }
+
+    return 0;
+  })();
+
+  return {
+    top,
+    height: bottom - top,
+  };
+}
+
+function detectIntersection(
+  options: DetectIntersectionOptions
+): Intersection | null {
+  const {
+    active,
+    collision,
+    droppableContainers,
+    pointerCoordinates,
+    indentationWidth,
+    activeDragDelta,
+  } = options;
+
   if (!active || !collision?.data) {
     return null;
   }
@@ -232,7 +301,7 @@ function detectIntersection({
 
   assertNonNullable(overRect, "Over must have rect");
 
-  const isOver = overData.isFolder && overData.isCollapsed;
+  const isOverCollapsedFolder = overData.isFolder && overData.isCollapsed;
   const isOverItself = active.id === collision.id;
   const isOverTop = (() => {
     if (!isOverItself && overData.isFolder && overData.isCollapsed) {
@@ -248,31 +317,37 @@ function detectIntersection({
 
     return collissionY > overRect.bottom - overRect.height / 2;
   })();
-  const isOverMiddle = isOver && !isOverTop && !isOverBottom;
+  const isOverMiddle = isOverCollapsedFolder && !isOverTop && !isOverBottom;
 
   if (!overItem) {
     return null;
   }
 
-  return {
-    activeId: active.id,
-    overId: overItem.id,
-    isOver,
+  const target = calculateTarget({
+    droppableContainers,
+    active,
+    previousItem,
+    overItem,
+    nextItem,
+    isOverBottom,
+    isOverMiddle,
+    isOverTop,
+    activeDragDelta,
+    indentationWidth,
+  });
+
+  const isOver = {
     isOverTop,
     isOverMiddle,
     isOverBottom,
-    target: calculateTarget({
-      droppableContainers,
-      active,
-      previousItem,
-      overItem,
-      nextItem,
-      isOverBottom,
-      isOverMiddle,
-      isOverTop,
-      activeDragDelta,
-      indentationWidth,
-    }),
+  };
+
+  return {
+    activeId: active.id,
+    overId: overItem.id,
+    ...isOver,
+    target,
+    overGroupBoundaries: getOverBoundaries(options, target, isOver),
   };
 }
 
@@ -310,6 +385,7 @@ export function useIntersectionDetection() {
     },
     [intersection]
   );
+  const resetIntersection = useCallback(() => setIntersection(null), []);
 
-  return { intersection, recalculateIntersecion };
+  return { intersection, recalculateIntersecion, resetIntersection };
 }

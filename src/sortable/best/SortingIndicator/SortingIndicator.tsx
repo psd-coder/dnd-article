@@ -3,6 +3,7 @@ import { RefObject, CSSProperties } from "react";
 import { LEVEL_INDENTATION } from "../constants";
 import { TypedOver } from "../dndkit";
 import { Intersection } from "../intersectionDetection";
+import { compensateContainerVerticalOffset } from "../utils";
 
 import styles from "./SortingIndicator.module.css";
 
@@ -20,12 +21,6 @@ function getIndicatorStyle(
     };
   }
 
-  const marginYOffset = parseInt(
-    window.getComputedStyle(containerRef.current).marginTop,
-    10
-  );
-  const containerYOffset = containerRef.current.getBoundingClientRect().top;
-  const scrollPositionY = containerRef.current.scrollTop;
   const yOffset = (() => {
     if (intersection.isOverTop) {
       return over.rect.top - INDICATOR_HEIGHT / 2;
@@ -40,19 +35,19 @@ function getIndicatorStyle(
 
   return {
     transform: `translateY(${Math.ceil(
-      yOffset - containerYOffset + scrollPositionY + marginYOffset
+      compensateContainerVerticalOffset(containerRef, yOffset)
     )}px)`,
   };
 }
 
 interface SortingIndicatorProps {
-  listRef: RefObject<HTMLElement>;
+  containerRef: RefObject<HTMLElement>;
   over: TypedOver | null;
   intersection: Intersection | null;
 }
 
 export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
-  listRef,
+  containerRef,
   over,
   intersection,
 }) => {
@@ -63,7 +58,7 @@ export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
         {
           "--indicator-height": INDICATOR_HEIGHT,
           "--indicator-dot-size": INDICATOR_DOT_SIZE,
-          ...getIndicatorStyle(listRef, over, intersection),
+          ...getIndicatorStyle(containerRef, over, intersection),
         } as CSSProperties
       }
     >
