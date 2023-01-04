@@ -37,15 +37,16 @@ export const SortableTreeItem: React.FC<SortableTreeItemProps> = ({
   isOverlay = false,
   ...props
 }) => {
+  const isFolder = isFlatFolder(item);
   const { isDragging, isSorting, active, listeners, setNodeRef } = useSortable({
     id: item.id,
     data: {
       depth: item.depth,
       isFile: isFlatFile(item),
-      isFolder: isFlatFolder(item),
-      isCollapsed: isFlatFolder(item) && item.collapsed,
+      isFolder,
+      isCollapsed: isFolder && item.collapsed,
       parentId: item.parentId,
-      childrenCount: isFlatFolder(item) ? item.children.length : 0,
+      childrenCount: isFolder ? item.children.length : 0,
     },
   });
 

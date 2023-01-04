@@ -113,7 +113,12 @@ function getMaxDepth({
     return previousItem.data.current.depth;
   }
 
-  if (isOverBottom && overData.isFolder && active.id !== overItem.id) {
+  if (
+    isOverBottom &&
+    overData.isFolder &&
+    !overData.isCollapsed &&
+    active.id !== overItem.id
+  ) {
     return overData.depth + 1;
   }
 
@@ -138,21 +143,16 @@ function getProjectedDepth(options: CalculateTargetOptions) {
 function calculateTarget(options: CalculateTargetOptions): IntersectionTarget {
   const { droppableContainers, active, previousItem, overItem, isOverTop } =
     options;
-  const overData = overItem.data.current;
-
-  assertNonNullable(overData, "overItem must contain current data");
-
+  const overData = getDroppableContainerData(overItem);
   const overItemIndex = droppableContainers.findIndex(
     (dc) => dc.id === active.id
   );
   const isOverCollapsedFolder = overData.isFolder && overData.isCollapsed;
-  const depth = isOverCollapsedFolder
-    ? overData.depth + 1
-    : getProjectedDepth(options);
+  const depth = getProjectedDepth(options);
   const parentId = (() => {
     const previousData = previousItem?.data.current;
 
-    if (isOverCollapsedFolder) {
+    if (isOverCollapsedFolder && !isOverTop) {
       return overItem.id;
     }
 
@@ -213,19 +213,30 @@ function getDroppableContainerById(
 function getOverBoundaries(
   { collision, droppableContainers }: DetectIntersectionOptions,
   target: IntersectionTarget,
-  { isOverTop }: OverPart
+  { isOverTop, isOverMiddle, isOverBottom }: OverPart
 ): OverGroupBoundaries | null {
-  if (!collision?.data) {
+  if (!collision?.data?.droppableContainer) {
     return null;
   }
 
   const collisionData = getDroppableContainerData(
     collision?.data?.droppableContainer
   );
-  const startItemId =
-    collisionData.isFolder && !isOverTop && !collisionData.isCollapsed
-      ? collision.id
-      : target.parentId;
+  const startItemId = (() => {
+    if (collisionData.isFolder) {
+      if (isOverTop) {
+        return target.parentId;
+      }
+
+      if (collisionData.isCollapsed && isOverBottom) {
+        return collisionData.parentId;
+      }
+
+      return collision.id;
+    }
+
+    return target.parentId;
+  })();
   const startIndex = droppableContainers.findIndex(
     (item) => item.id === startItemId
   );
@@ -244,11 +255,7 @@ function getOverBoundaries(
       return startFolder.rect.current?.bottom ?? 0;
     }
 
-    for (
-      let i = startIndex + 1, ii = droppableContainers.length;
-      i <= ii;
-      i++
-    ) {
+    for (let i = startIndex + 1, ii = droppableContainers.length; i < ii; i++) {
       const droppableContainerData = getDroppableContainerData(
         droppableContainers[i]
       );

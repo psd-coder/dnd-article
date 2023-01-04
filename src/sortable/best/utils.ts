@@ -35,21 +35,16 @@ export function moveItemInFlatList(
     ({ id }) => id === intersection.activeId
   );
   const overIndex = flatItems.findIndex(({ id }) => id === intersection.overId);
-  const toIndex =
+  let toIndex =
     intersection.isOverTop || fromIndex === overIndex
       ? overIndex
       : overIndex + 1;
   const toItem = flatItems[overIndex];
   const isTargetCollapsedFolder = isFlatFolder(toItem) && toItem.collapsed;
 
-  if (isTargetCollapsedFolder) {
-    flatItems[overIndex] = { ...toItem, collapsed: false };
+  if (isTargetCollapsedFolder && intersection.isOverBottom) {
+    toIndex = toIndex + 1;
   }
 
-  return moveItems(
-    flatItems,
-    fromIndex,
-    isTargetCollapsedFolder ? target.overData.childrenCount + toIndex : toIndex,
-    target.depth
-  );
+  return moveItems(flatItems, fromIndex, toIndex, target.depth);
 }
