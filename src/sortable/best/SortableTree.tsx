@@ -125,10 +125,15 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
     if (!newIntersection?.isOverMiddle) {
       cancelLastDelayedAction();
     } else {
-      runActionWithDelay(
-        () => handleCollapse(treeId(over!.id), false),
-        FOLDER_AUTO_OPEN_DELAY
-      );
+      runActionWithDelay(() => {
+        handleCollapse(treeId(over!.id), false);
+        requestAnimationFrame(() =>
+          recalculateIntersecion(
+            dragMoveEvent,
+            latestCollisionDetectionArgRef.current
+          )
+        );
+      }, FOLDER_AUTO_OPEN_DELAY);
     }
   }
 
