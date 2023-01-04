@@ -55,13 +55,12 @@ export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
   const minDepth = intersection?.target.depth.min ?? 0;
   const projectedDepth = intersection?.target.depth.projected ?? 0;
 
-  console.log(intersection?.target.depth);
-
   return (
     <div
       className={styles.container}
       style={
         {
+          "--indicator-level-width": LEVEL_INDENTATION,
           "--indicator-height": INDICATOR_HEIGHT,
           "--indicator-dot-size": INDICATOR_DOT_SIZE,
           ...getIndicatorStyle(containerRef, over, intersection),
@@ -72,19 +71,11 @@ export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
         <span
           key={i}
           className={clsx(styles.dot, {
-            [styles.isLevelOnly]: i + 1 < minDepth,
+            [styles.isLevelOnly]: i < minDepth,
           })}
-          style={{ width: LEVEL_INDENTATION }}
         />
       ))}
-      <div
-        className={styles.line}
-        style={{
-          left:
-            projectedDepth * LEVEL_INDENTATION +
-            (INDICATOR_DOT_SIZE + INDICATOR_HEIGHT),
-        }}
-      />
+      <div className={styles.line} />
     </div>
   );
 };
