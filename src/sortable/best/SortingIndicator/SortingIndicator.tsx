@@ -71,7 +71,9 @@ export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
       {Array.from({ length: projectedDepth }, (_, i) => (
         <span
           key={i}
-          className={clsx(styles.dot, { [styles.isLevelOnly]: i < minDepth })}
+          className={clsx(styles.dot, {
+            [styles.isLevelOnly]: i + 1 < minDepth,
+          })}
           style={{ width: LEVEL_INDENTATION }}
         />
       ))}
