@@ -223,9 +223,9 @@ function getDroppableContainerById(
 function getOverBoundaries(
   { collision, droppableContainers }: DetectIntersectionOptions,
   target: IntersectionTarget,
-  { isOverTop, isOverMiddle, isOverBottom }: OverPart
+  { isOverTop, isOverBottom }: OverPart
 ): OverGroupBoundaries | null {
-  if (!collision?.data?.droppableContainer) {
+  if (!collision?.data?.droppableContainer || target.depth.projected === 0) {
     return null;
   }
 
