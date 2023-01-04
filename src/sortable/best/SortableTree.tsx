@@ -210,6 +210,7 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
           <DragOverlay dropAnimation={null} modifiers={OVERLAY_MODIFIERS}>
             {activeItem ? (
               <SortableTreeItem
+                className={styles.overlay}
                 item={activeItem}
                 overlayIntersection={null}
                 indentationWidth={LEVEL_INDENTATION}

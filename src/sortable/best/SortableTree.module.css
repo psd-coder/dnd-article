@@ -1,3 +1,7 @@
 .container {
   position: relative;
 }
+
+.overlay {
+  opacity: 0.75;
+}
