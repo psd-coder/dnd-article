@@ -46,5 +46,5 @@ export function moveItemInFlatList(
     toIndex = toIndex + 1;
   }
 
-  return moveItems(flatItems, fromIndex, toIndex, target.depth);
+  return moveItems(flatItems, fromIndex, toIndex, target.depth.projected);
 }

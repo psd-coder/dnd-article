@@ -61,7 +61,7 @@
     top: calc(var(--item-padding) * -1);
     bottom: calc(var(--item-padding) * -1);
     right: calc(var(--item-depth-width) / 3);
-    background: var(--color-borders);
+    background: var(--color-muted);
   }
 
   /* .item:where(:hover, :focus-visible) &::before {

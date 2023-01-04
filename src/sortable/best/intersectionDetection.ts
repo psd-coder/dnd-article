@@ -21,10 +21,16 @@ import {
   typedDroppableContainer,
 } from "./dndkit";
 
+interface IntersectionDepth {
+  min: number;
+  max: number;
+  projected: number;
+}
+
 interface IntersectionTarget {
   overData: Data<ItemData>;
   parentId: UniqueIdentifier | null;
-  depth: number;
+  depth: IntersectionDepth;
   index: number;
 }
 
@@ -129,7 +135,7 @@ function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function getProjectedDepth(options: CalculateTargetOptions) {
+function getDepth(options: CalculateTargetOptions): IntersectionDepth {
   const { active, activeDragDelta, indentationWidth } = options;
   const minDepth = getMinDepth(options);
   const maxDepth = getMaxDepth(options);
@@ -137,7 +143,11 @@ function getProjectedDepth(options: CalculateTargetOptions) {
 
   assertNonNullable(active.data.current, "Active must have data");
 
-  return clamp(minDepth, active.data.current.depth + dragDepth, maxDepth);
+  return {
+    min: Math.min(minDepth, maxDepth),
+    max: Math.max(minDepth, maxDepth),
+    projected: clamp(minDepth, active.data.current.depth + dragDepth, maxDepth),
+  };
 }
 
 function calculateTarget(options: CalculateTargetOptions): IntersectionTarget {
@@ -148,7 +158,7 @@ function calculateTarget(options: CalculateTargetOptions): IntersectionTarget {
     (dc) => dc.id === active.id
   );
   const isOverCollapsedFolder = overData.isFolder && overData.isCollapsed;
-  const depth = getProjectedDepth(options);
+  const depth = getDepth(options);
   const parentId = (() => {
     const previousData = previousItem?.data.current;
 
@@ -156,15 +166,15 @@ function calculateTarget(options: CalculateTargetOptions): IntersectionTarget {
       return overItem.id;
     }
 
-    if (depth === 0 || !previousData) {
+    if (depth.projected === 0 || !previousData) {
       return null;
     }
 
-    if (depth === previousData.depth) {
+    if (depth.projected === previousData.depth) {
       return previousData.parentId;
     }
 
-    if (depth > previousData.depth) {
+    if (depth.projected > previousData.depth) {
       return previousItem.id;
     }
 
@@ -174,7 +184,7 @@ function calculateTarget(options: CalculateTargetOptions): IntersectionTarget {
         droppableContainers[i]
       );
 
-      if (droppableContainerData.depth === depth) {
+      if (droppableContainerData.depth === depth.projected) {
         return droppableContainerData.parentId;
       }
     }
@@ -260,7 +270,7 @@ function getOverBoundaries(
         droppableContainers[i]
       );
 
-      if (droppableContainerData.depth < target.depth) {
+      if (droppableContainerData.depth < target.depth.projected) {
         return droppableContainers[i].rect.current?.top ?? 0;
       }
     }

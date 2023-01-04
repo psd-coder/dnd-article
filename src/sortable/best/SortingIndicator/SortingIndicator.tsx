@@ -1,4 +1,5 @@
 import { RefObject, CSSProperties } from "react";
+import clsx from "clsx";
 
 import { LEVEL_INDENTATION } from "../constants";
 import { TypedOver } from "../dndkit";
@@ -51,6 +52,11 @@ export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
   over,
   intersection,
 }) => {
+  const minDepth = intersection?.target.depth.min ?? 0;
+  const projectedDepth = intersection?.target.depth.projected ?? 0;
+
+  console.log(intersection?.target.depth);
+
   return (
     <div
       className={styles.container}
@@ -62,10 +68,10 @@ export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
         } as CSSProperties
       }
     >
-      {Array.from({ length: intersection?.target?.depth ?? 0 }, (_, i) => (
+      {Array.from({ length: projectedDepth }, (_, i) => (
         <span
           key={i}
-          className={styles.dot}
+          className={clsx(styles.dot, { [styles.isLevelOnly]: i < minDepth })}
           style={{ width: LEVEL_INDENTATION }}
         />
       ))}
@@ -73,7 +79,7 @@ export const SortingIndicator: React.FC<SortingIndicatorProps> = ({
         className={styles.line}
         style={{
           left:
-            (intersection?.target?.depth ?? 0) * LEVEL_INDENTATION +
+            projectedDepth * LEVEL_INDENTATION +
             (INDICATOR_DOT_SIZE + INDICATOR_HEIGHT),
         }}
       />
