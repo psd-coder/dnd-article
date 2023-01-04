@@ -28,7 +28,7 @@
   }
 
   &.isLevelOnly::before {
-    background: var(--color-borders);
+    display: none;
   }
 }
 
