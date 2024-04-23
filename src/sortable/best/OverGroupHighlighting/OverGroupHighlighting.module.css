@@ -1,0 +1,7 @@
+.highlighting {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--bg-overlay-active);
+  border-radius: var(--radius-m);
+}

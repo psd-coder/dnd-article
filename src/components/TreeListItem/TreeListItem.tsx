@@ -8,6 +8,7 @@ export type TreeListItemHtmlProps = HTMLAttributes<HTMLLIElement>;
 export interface TreeListItemProps extends TreeListItemHtmlProps {
   className?: string;
   classNameLabel?: string;
+  classNameSpacer?: string;
   startAdornment: ReactNode;
   name: string;
   depth: number;
@@ -20,6 +21,7 @@ export const TreeListItem = forwardRef<HTMLLIElement, TreeListItemProps>(
     {
       className,
       classNameLabel,
+      classNameSpacer,
       depth,
       startAdornment,
       name,
@@ -50,7 +52,7 @@ export const TreeListItem = forwardRef<HTMLLIElement, TreeListItemProps>(
             {Array.from({ length: depth }, (_, i) => (
               <span
                 key={i}
-                className={styles.depthSpacer}
+                className={clsx(styles.depthSpacer, classNameSpacer)}
                 style={{ width: indentationWidth }}
               />
             ))}

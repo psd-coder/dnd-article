@@ -1,15 +1,20 @@
-import { ReactElement } from "react";
+import { forwardRef, ReactNode } from "react";
 import clsx from "clsx";
-
-import { TreeListItemProps } from "@/components/TreeListItem";
 
 import styles from "./TreeList.module.css";
 
 export interface ListProps {
   className?: string;
-  children: ReactElement<TreeListItemProps>[];
+  children: ReactNode[];
 }
 
-export const List: React.FC<ListProps> = ({ className, children }) => {
-  return <ul className={clsx(styles.container, className)}>{children}</ul>;
-};
+export const List = forwardRef<HTMLUListElement, ListProps>(function List(
+  { className, children },
+  ref
+) {
+  return (
+    <ul className={clsx(styles.container, className)} ref={ref}>
+      {children}
+    </ul>
+  );
+});

@@ -1,0 +1,40 @@
+.container {
+  position: absolute;
+  left: calc(var(--space-1) * 3 - (var(--indicator-level-width) * 1px) / 2);
+  right: 0;
+  display: flex;
+  z-index: 10;
+}
+
+.dot {
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: calc(var(--indicator-level-width) * 1px);
+
+  &::before {
+    content: "";
+    transform: translate(
+      calc(
+        var(--indicator-level-width) * 2 + var(--indicator-dot-size) / 2 * -1px
+      ),
+      calc((var(--indicator-height) - var(--indicator-dot-size)) / 2 * 1px)
+    );
+    height: calc(var(--indicator-dot-size) * 1px);
+    width: calc(var(--indicator-dot-size) * 1px);
+    border-radius: var(--radius-circle);
+    background: var(--color-accent);
+  }
+
+  &.isLevelOnly::before {
+    display: none;
+  }
+}
+
+.line {
+  flex-grow: 1;
+  height: calc(var(--indicator-height) * 1px);
+  border-radius: calc(var(--indicator-dot-size) / 2 * 1px);
+  background: var(--color-accent);
+}

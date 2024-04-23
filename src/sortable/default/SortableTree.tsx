@@ -18,24 +18,23 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Portal } from "@/components/Portal";
 import { List } from "@/components/TreeList";
 import { Tree, TreeId } from "@/data";
 import { isFolder } from "@/data/utils";
 
-import { SortableTreeItem } from "./SortableTreeItem";
-import { FlattenedItem } from "./types";
+import { isFlatFolder } from "../types";
 import {
   buildTree,
-  getRenderedFlattenedItems,
+  getRenderedFlatItems,
   flattenTree,
-  getProjection,
   updateTreeItem,
-} from "./utils";
-import { isFlattenedFolder } from "./types";
+} from "../utils/tree";
+
+import { SortableTreeItem } from "./SortableTreeItem";
+import { getProjectedDepth } from "./projection";
+import { moveItems } from "../utils/move";
 
 const LEVEL_INDENTATION = 12;
 const MEASURING = {
@@ -94,15 +93,15 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   const [activeId, setActiveId] = useState<TreeId | null>(null);
   const [overId, setOverId] = useState<TreeId | null>(null);
   const [offsetLeft, setOffsetLeft] = useState(0);
-  const flattenedItems = flattenTree(tree);
+  const flatItems = flattenTree(tree);
   const renderedItems = useMemo(
-    () => getRenderedFlattenedItems(flattenedItems, activeId),
-    [flattenedItems, activeId]
+    () => getRenderedFlatItems(flatItems, activeId),
+    [flatItems, activeId]
   );
   const activeItem = activeId
     ? renderedItems.find(({ id }) => id === activeId)
     : null;
-  const projected = getProjection({
+  const projectedDepth = getProjectedDepth({
     items: renderedItems,
     activeId,
     overId,
@@ -126,17 +125,18 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
   function handleDragEnd({ active, over }: DragEndEvent) {
     resetState();
 
-    if (projected && over) {
-      const clonedItems: FlattenedItem[] = structuredClone(flattenedItems);
-      const overIndex = clonedItems.findIndex(({ id }) => id === over.id);
-      const activeIndex = clonedItems.findIndex(({ id }) => id === active.id);
+    if (over && projectedDepth !== null) {
+      const from = flatItems.findIndex(({ id }) => id === active.id);
+      const to = flatItems.findIndex(({ id }) => id === over.id);
+      const directionCompensation = to <= from ? 0 : 1;
+      const movedFlatItems = moveItems(
+        flatItems,
+        from,
+        to + directionCompensation,
+        projectedDepth
+      );
 
-      clonedItems[activeIndex] = { ...clonedItems[activeIndex], ...projected };
-
-      const sortedItems = arrayMove(clonedItems, activeIndex, overIndex);
-      const newTree = buildTree(sortedItems);
-
-      onChange(newTree);
+      onChange(buildTree(movedFlatItems));
     }
   }
 
@@ -188,14 +188,12 @@ export const SortableTree: React.FC<SortableTreeProps> = ({
               item={{
                 ...item,
                 depth:
-                  item.id === activeId && projected
-                    ? projected.depth
+                  item.id === activeId && projectedDepth !== null
+                    ? projectedDepth
                     : item.depth,
               }}
               onClick={
-                isFlattenedFolder(item)
-                  ? () => handleCollapse(item.id)
-                  : undefined
+                isFlatFolder(item) ? () => handleCollapse(item.id) : undefined
               }
               indentationWidth={LEVEL_INDENTATION}
             />
